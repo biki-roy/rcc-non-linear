@@ -1,0 +1,12 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Build / install
+build/
+dist/
+*.egg-info/
+
+# Jupyter / Colab
+.ipynb_checkpoints/
