@@ -33,7 +33,7 @@ class Model:
 
         self.fy = props["fy"]
         self.fu = props["fu"]
-        self.Es = props["Es"]
+        self.Es = props.get("Es", 29000)   # default modulus of elasticity
         self.Esh = props.get("Esh", 0.043 * self.Es)   # default strain hardening modulus
         self.e_sh = props.get("e_sh", 0.05)
         self.e_ult = props.get("e_ult", 0.1)
