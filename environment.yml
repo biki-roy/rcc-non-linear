@@ -1,0 +1,17 @@
+# environment.yml
+#To recreate the conda environment, use the command:
+#conda env create -f environment.yml
+#conda activate rcc_env
+
+name: rcc_env
+channels:
+  - conda-forge
+dependencies:
+  - python=3.8
+  - numpy
+  - pandas
+  - matplotlib
+  - pip
+  - pip:
+      - openseespy
+      - opsvis

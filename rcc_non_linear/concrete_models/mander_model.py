@@ -1,8 +1,11 @@
 import math
-from importlib.resources import files
+try:
+    from importlib.resources import files  # Python ≥3.9
+except ImportError:
+    from importlib_resources import files  # Python 3.8
+
 import pandas as pd
 from rcc_non_linear.utils.helper import interpolate_z
-
 
 def load_mander_k():
     data_path = files("rcc_non_linear.concrete_models.data") / "rect_conf_k.csv"

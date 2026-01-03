@@ -8,26 +8,28 @@ version = "0.1.0"
 description = "Nonlinear analysis tools for RCC structures"
 authors = [{ name = "Abinash Mandal" }]
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.8"
+
 dependencies = [
     "numpy",
     "scipy",
     "matplotlib",
-    "pandas"
+    "pandas",
+    "importlib_resources; python_version < '3.9'",
+]
+
+[project.optional-dependencies]
+opensees = [
+    "openseespy; python_version == '3.8'",
+    "opsvis; python_version == '3.8'",
 ]
 
 [tool.setuptools]
-packages = [
-    "rcc_non_linear",
-    "rcc_non_linear.concrete_models",
-    "rcc_non_linear.concrete_models.data",
-    "rcc_non_linear.moment_curvature",
-    "rcc_non_linear.pushover",
-    "rcc_non_linear.utils"
-]
-
 include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["rcc_non_linear*"]
 
 [tool.setuptools.package-data]
 "rcc_non_linear.concrete_models.data" = ["*.csv"]
-
