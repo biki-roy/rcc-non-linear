@@ -1,5 +1,3 @@
-import openseespy.opensees as ops
-import opsvis as opsv
 from rcc_non_linear import Model
 
 col_props = {
@@ -17,9 +15,12 @@ col_props = {
 
 model = Model(col_props)
 
-print(model.confined_props)
-print(model.fib_section)
+# print(model.confined_props)
+# print(model.fib_section)
 
 #To plot the fiber section, use any of the following methods:
 # model.plot_fib_section()
-model.fib_section.plot()
+# model.fib_section.plot()
+#To run moment-curvature analysis:
+results_df = model.run_M_phi_analysis()
+print(results_df.tail())

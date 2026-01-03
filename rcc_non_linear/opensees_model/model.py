@@ -60,7 +60,7 @@ class Model:
 
         db = self.db if self.section_type == "circular" else max(self.dbTop, self.dbBot)
         self.lp = max(0.08 * self.L + 0.15 * self.fy * db, 0.3*db*self.fy)
-        self.create_model()
+        self.create_model()        
 
     def create_model(self):
         import openseespy.opensees as ops
@@ -104,5 +104,20 @@ class Model:
                 sec_tag=self.fib_sec_tag, core_material=self.core_tag,
                 cover_material=self.cover_tag, bar_material=self.bar_tag
             )
+            self.core_b = self.fib_section.core_b
+            self.core_h = self.fib_section.core_h
+        
     def plot_fib_section(self):
         self.fib_section.plot()
+
+    # def create_element(self, analysis_type: str):
+    #     import openseespy.opensees as ops
+    #     ops.node(1, 0.0, 0.0)
+    #     ops.node(2, 0.0, 0.0) if analysis_type=="moment-curvature" else ops.node(2, self.L, 0.0)
+    #     ops.fix(1, 1, 1, 1)
+    #     ops.mass(2, 1.0, 1.0, 1.0)
+
+    def run_M_phi_analysis(self, maxK=0.001, dK=0.0001):
+        from rcc_non_linear.opensees_model.m_phi import moment_curvature_analysis
+        results_df = moment_curvature_analysis(self, maxK, dK)
+        return results_df
