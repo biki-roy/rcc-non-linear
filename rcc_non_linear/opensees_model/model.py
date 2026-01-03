@@ -85,17 +85,17 @@ class Model:
                 fyh=self.fyh, esm=self.esm,
                 nx=self.nx, ny=self.ny
             )
-        confined_props = material.confined_props()
-        unconfined_props = material.unconfined_props()
-        ops.uniaxialMaterial('Concrete01', self.core_tag, *confined_props)
-        ops.uniaxialMaterial('Concrete01', self.cover_tag, *unconfined_props)
+        self.confined_props = material.confined_props()
+        self.unconfined_props = material.unconfined_props()
+        ops.uniaxialMaterial('Concrete01', self.core_tag, *self.confined_props)
+        ops.uniaxialMaterial('Concrete01', self.cover_tag, *self.unconfined_props)
         ops.uniaxialMaterial('ReinforcingSteel', self.bar_tag, self.fy, self.fu, self.Es, self.Esh, self.e_sh, self.e_ult)
     
     def define_section(self):
         if self.section_type == "circular":
             pass
         else:
-            RectSection(
+            self.fib_section = RectSection(
                 B=self.B, H=self.H, cover=self.cover, Ec=self.Ec,
                 nBarsTop=self.nBarsTop, dbTop=self.dbTop,
                 nBarsBot=self.nBarsBot, dbBot=self.dbBot,
@@ -104,3 +104,5 @@ class Model:
                 sec_tag=self.fib_sec_tag, core_material=self.core_tag,
                 cover_material=self.cover_tag, bar_material=self.bar_tag
             )
+    def plot_fib_section(self):
+        self.fib_section.plot()
