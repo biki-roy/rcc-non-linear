@@ -1,6 +1,6 @@
 # Expose high-level classes and functions from submodules
 from .concrete_models.mander_model import RectConcreteMander, CircConcreteMander
-from .sections.rect_section import RectSection
+from .opensees_model.rect_section import RectSection
 from .moment_curvature import *
 from .pushover import *
 from .utils.helper import *

@@ -1,17 +1,15 @@
-import openseespy.opensees as ops
-import opsvis as opsv
 import numpy as np
 import matplotlib.pyplot as plt
 import math
 
-class RectSection:
+class RectSection:    
     def __init__(self, B, H, cover, Ec, 
                  nBarsTop , dbTop, 
                  nBarsBot, dbBot,
                  nBarsInt, dbInt,
                  dh, 
                  sec_tag, core_material, cover_material, bar_material):
-
+        import opsvis as opsv
         self.B = B
         self.H = H
         self.cover = cover
@@ -78,6 +76,7 @@ class RectSection:
         """
         # plt.figure(figsize=(6, 8))
         # matcolor: [Material 1 (Core), Material 2 (Cover), Material 3 (Steel)]
+        import opsvis as opsv
         opsv.plot_fiber_section(self.fib_sec, fillflag=1, matcolor=['gold', 'lightgrey', 'red'])
         plt.title("Rectangular Column Fiber Section")
         plt.axis('equal')
