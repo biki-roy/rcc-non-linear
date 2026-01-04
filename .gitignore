@@ -10,3 +10,5 @@ dist/
 
 # Jupyter / Colab
 .ipynb_checkpoints/
+
+trash

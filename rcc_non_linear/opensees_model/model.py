@@ -58,9 +58,11 @@ class Model:
         if self.section_type == "circular":
             self.Ag = math.pi * (self.D**2) / 4
             self.As = self.nBars * math.pi * (self.db**2) / 4
+            self.Iz = math.pi * ((self.D/2) ** 4) / 4
         else:
             self.Ag = self.B * self.H
             self.As = (self.nBarsTop + self.nBarsBot + self.nBarsInt) * math.pi * (self.dbTop**2) / 4
+            self.Iz = (self.B * self.H**3) / 12.0
 
         db = self.db if self.section_type == "circular" else max(self.dbTop, self.dbBot)
         self.lp = max(0.08 * self.L + 0.15 * self.fy * db, 0.3*db*self.fy)
@@ -127,8 +129,16 @@ class Model:
 
     def run_M_phi_analysis(self, maxK=0.01, dK=0.00001):
         from rcc_non_linear.opensees_model.m_phi import moment_curvature_analysis
+        self.create_model()  
         results_df, yield_step = moment_curvature_analysis(self, maxK, dK)
         bilinear_df = caltrans_bilinear(results_df, yield_step)
         return results_df, bilinear_df, yield_step
-    
-    # def plot
+
+
+    def run_pushover_analysis(self, maxU=40, dU=0.05):
+        from rcc_non_linear.opensees_model.pushover import pushover_analysis
+        self.create_model()  
+        results_df, yield_step = pushover_analysis(self, maxU, dU)
+        bilinear_df = caltrans_bilinear(results_df, yield_step)
+        return results_df, bilinear_df, yield_step
+
