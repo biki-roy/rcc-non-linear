@@ -1,5 +1,9 @@
 import math
-from rcc_non_linear import RectConcreteMander, CircConcreteMander, RectSection
+from rcc_non_linear.concrete_models.mander_model import RectConcreteMander, CircConcreteMander
+from rcc_non_linear.opensees_model.rect_section import RectSection
+from rcc_non_linear.opensees_model.circ_section import CircSection
+from rcc_non_linear.utils.helper import caltrans_bilinear 
+
 class Model:
     def __init__(self, props: dict):
         """
@@ -17,7 +21,7 @@ class Model:
         self.cover = props["cover"]      # concrete cover   
 
         if self.section_type == "circular":
-            self.nBar = props["nBar"]
+            self.nBars = props["nBars"]
             self.db = props["db"]
         elif self.section_type == "rectangular":
             self.nBarsTop = props["nBarsTop"]
@@ -35,7 +39,7 @@ class Model:
         self.fu = props["fu"]
         self.Es = props.get("Es", 29000)   # default modulus of elasticity
         self.Esh = props.get("Esh", 0.043 * self.Es)   # default strain hardening modulus
-        self.e_sh = props.get("e_sh", 0.05)
+        self.e_sh = props.get("e_sh", 0.005)
         self.e_ult = props.get("e_ult", 0.1)
 
         self.dh = props["dh"]
@@ -53,7 +57,7 @@ class Model:
 
         if self.section_type == "circular":
             self.Ag = math.pi * (self.D**2) / 4
-            self.As = self.nBar * math.pi * (self.db**2) / 4
+            self.As = self.nBars * math.pi * (self.db**2) / 4
         else:
             self.Ag = self.B * self.H
             self.As = (self.nBarsTop + self.nBarsBot + self.nBarsInt) * math.pi * (self.dbTop**2) / 4
@@ -93,7 +97,11 @@ class Model:
     
     def define_section(self):
         if self.section_type == "circular":
-            pass
+            self.fib_section = CircSection(self.D, self.cover, self.Ec,
+                                           self.nBars, self.db, self.dh, 
+                                           self.fib_sec_tag, self.core_tag, self.cover_tag, self.bar_tag)
+            self.core_h = self.fib_section.R_core
+            self.bar_h = self.fib_section.R_bar
         else:
             self.fib_section = RectSection(
                 B=self.B, H=self.H, cover=self.cover, Ec=self.Ec,
@@ -104,8 +112,8 @@ class Model:
                 sec_tag=self.fib_sec_tag, core_material=self.core_tag,
                 cover_material=self.cover_tag, bar_material=self.bar_tag
             )
-            self.core_b = self.fib_section.core_b
             self.core_h = self.fib_section.core_h
+            self.bar_h = self.fib_section.bar_h
         
     def plot_fib_section(self):
         self.fib_section.plot()
@@ -117,7 +125,10 @@ class Model:
     #     ops.fix(1, 1, 1, 1)
     #     ops.mass(2, 1.0, 1.0, 1.0)
 
-    def run_M_phi_analysis(self, maxK=0.001, dK=0.0001):
+    def run_M_phi_analysis(self, maxK=0.01, dK=0.00001):
         from rcc_non_linear.opensees_model.m_phi import moment_curvature_analysis
-        results_df = moment_curvature_analysis(self, maxK, dK)
-        return results_df
+        results_df, yield_step = moment_curvature_analysis(self, maxK, dK)
+        bilinear_df = caltrans_bilinear(results_df, yield_step)
+        return results_df, bilinear_df, yield_step
+    
+    # def plot

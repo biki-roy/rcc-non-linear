@@ -84,8 +84,8 @@ class CircConcreteMander:
         ecc = self.ecc()
         ecu = self.ecu()
         fc = self.fc(ecu, fcc_prime, ecc)
-        return [fcc_prime, ecc, fc, ecu]
+        return [-fcc_prime, -ecc, -fc, -ecu]
 
     def unconfined_props(self):
         fc = self.fc(0.005, self.fc_prime, 0.002)
-        return [self.fc_prime, 0.002, 0, 0.005]  # 0 to be replaced by fc
+        return [-self.fc_prime, -0.002, -0, -0.005]  # 0 to be replaced by fc

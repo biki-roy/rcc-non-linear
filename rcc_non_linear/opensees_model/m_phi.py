@@ -7,6 +7,7 @@ def moment_curvature_analysis(model, maxK, dK):
     
     ops.fix(1, 1, 1, 1)
     ops.fix(2, 0, 1, 0)
+    # ops.fix(2, 1, 0, 0)
 
     ops.element('zeroLengthSection', 1, 1, 2, model.fib_sec_tag)
 
@@ -25,9 +26,12 @@ def moment_curvature_analysis(model, maxK, dK):
     }
     peak_moment = 0.0
     curr_K = 0.0
+    yield_curv = None
+    step = 0
     while curr_K < maxK:
         ok = ops.analyze(1)
         if ok != 0: break
+        step += 1
         ops.reactions()
         curr_moment = -ops.nodeReaction(1, 3)
         curr_K = ops.nodeDisp(2,3)
@@ -35,13 +39,15 @@ def moment_curvature_analysis(model, maxK, dK):
         
         # --- Fiber Responses ---
         # Concrete Core (Material 1) at bottom extreme fiber
-        resp_c = ops.eleResponse(1, 'section', 'fiber', model.core_h, 0.0, model.core_tag, 'stressStrain')
-
-        sig_c, eps_c = resp_c[0], resp_c[1]
+        sig_c, eps_c = ops.eleResponse(1, 'section', 'fiber', model.core_h, 0.0, model.core_tag, 'stressStrain')
 
         # Steel (Material 3) at top extreme fiber
-        resp_s = ops.eleResponse(1, 'section', 'fiber', -model.core_h, 0.0, model.bar_tag, 'stressStrain')
-        sig_s, eps_s = resp_s[0], resp_s[1]
+        sig_s, eps_s  = ops.eleResponse(1, 'section', 'fiber', -model.bar_h, 0.0, model.bar_tag, 'stressStrain')
+
+        if (yield_curv is None) and (eps_s >= model.fy / model.Es):
+            yield_curv = curr_K
+            yield_step = step
+            print(f"✅ Yield point reached at curvature = {yield_curv:.6f}")
 
         results['curvatures'].append(curr_K)
         results['moments'].append(curr_moment)
@@ -60,6 +66,6 @@ def moment_curvature_analysis(model, maxK, dK):
         if eps_s > model.e_ult:
             print(f"⚠️ Steel ruptured at curvature = {curr_K:.6f}")
             break
-    
+        
     results_df = pd.DataFrame(results)
-    return results_df
+    return results_df, yield_step

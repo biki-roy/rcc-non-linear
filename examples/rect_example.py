@@ -1,5 +1,5 @@
 from rcc_non_linear import Model
-
+from rcc_non_linear.utils.helper import plot_response, plot_response_multi
 col_props = {
     'fc': 5.366,
     'B': 23.622, 'H': 23.622, 'L': 155.1181,
@@ -22,5 +22,15 @@ model = Model(col_props)
 # model.plot_fib_section()
 # model.fib_section.plot()
 #To run moment-curvature analysis:
-results_df = model.run_M_phi_analysis()
-print(results_df.tail())
+results_df, bilinear_df, yield_step = model.run_M_phi_analysis()
+print(f"Yield occurred at step: {yield_step}")
+print(bilinear_df)
+
+plot_response_multi(
+    dfs=[results_df.iloc[:, 0:2], bilinear_df],
+    names=["Original", "Bilinear"],
+    colors=["black", "red"],
+    x_label="Curvature",
+    y_label="Moment",
+    title="Curves Comparison"
+)
