@@ -7,7 +7,6 @@ def moment_curvature_analysis(model, maxK, dK):
     
     ops.fix(1, 1, 1, 1)
     ops.fix(2, 0, 1, 0)
-    # ops.fix(2, 1, 0, 0)
 
     ops.element('zeroLengthSection', 1, 1, 2, model.fib_sec_tag)
 
