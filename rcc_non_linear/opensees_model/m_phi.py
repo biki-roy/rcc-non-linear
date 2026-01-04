@@ -16,7 +16,7 @@ def moment_curvature_analysis(model, maxK, dK):
     ops.timeSeries('Linear', 2)
     ops.pattern('Plain', 2, 2)
     ops.load(2, 0.0, 0.0, 1.0)
-    ops.integrator('DisplacementControl', 2, 3, dK)
+    ops.integrator('DisplacementControl', 2, 3, dK, 1, dK, dK)
 
     results = {
         'curvatures': [0.0], 'moments': [0.0],
