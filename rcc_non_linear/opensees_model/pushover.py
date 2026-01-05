@@ -21,7 +21,10 @@ def pushover_analysis(model, maxU, dU):
     ops.timeSeries('Linear', 2)
     ops.pattern('Plain', 2, 2)
     ops.load(2, 1.0, 0.0, 0.0)
-    ops.integrator('DisplacementControl', 2, 1, dU)
+    if model.section_type == "circular":
+        ops.integrator('DisplacementControl', 2, 1, dU)
+    else:
+        ops.integrator('DisplacementControl', 2, 1, -dU)
 
     results = {
         'displacements': [0.0], 'forces': [0.0],
@@ -32,26 +35,33 @@ def pushover_analysis(model, maxU, dU):
     curr_disp = 0.0
     yield_disp = None
     step = 0
+
     while curr_disp < maxU:
         ok = ops.analyze(1)
         if ok != 0: break
         step += 1
         ops.reactions()
-        curr_force = -ops.nodeReaction(1, 1)
-        curr_disp = ops.nodeDisp(2, 1)
+        if model.section_type == "circular": 
+            curr_force = -ops.nodeReaction(1, 1)
+            curr_disp = ops.nodeDisp(2, 1)
+        else:
+            curr_force = ops.nodeReaction(1, 1)
+            curr_disp = -ops.nodeDisp(2, 1)
+        # print(curr_disp, curr_force)
         if curr_force > peak_force: peak_force = curr_force
         
         # --- Fiber Responses ---
-        # Concrete Core (Material 1) at bottom extreme fiber
-        sig_c, eps_c = ops.eleResponse(1, 'section', model.fib_sec_tag, 'fiber', -model.core_h, 0.0, model.core_tag, 'stressStrain')
-
-        # Steel (Material 3) at top extreme fiber
-        sig_s, eps_s  = ops.eleResponse(1, 'section', model.fib_sec_tag, 'fiber', model.bar_h, 0.0, model.bar_tag, 'stressStrain')
+        if model.section_type == "circular":
+            sig_c, eps_c = ops.eleResponse(1, 'section', model.fib_sec_tag, 'fiber', -model.core_h, 0.0, model.core_tag, 'stressStrain')
+            sig_s, eps_s  = ops.eleResponse(1, 'section', model.fib_sec_tag, 'fiber', model.bar_h, 0.0, model.bar_tag, 'stressStrain')   
+        else:
+            sig_c, eps_c = ops.eleResponse(1, 'section', model.fib_sec_tag, 'fiber', model.core_h, 0.0, model.core_tag, 'stressStrain')
+            sig_s, eps_s  = ops.eleResponse(1, 'section', model.fib_sec_tag, 'fiber', -model.bar_h, 0.0, model.bar_tag, 'stressStrain')
 
         if (yield_disp is None) and (eps_s >= model.fy / model.Es):
             yield_disp = curr_disp
             yield_step = step
-            print(f"✅ Yield point reached at curvature = {yield_disp:.6f}")
+            print(f"✅ Yield point reached at displacement = {yield_disp:.6f}")
 
         results['displacements'].append(curr_disp)
         results['forces'].append(curr_force)
