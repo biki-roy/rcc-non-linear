@@ -7,7 +7,7 @@ def pushover_analysis(model, maxU, dU):
     
     ops.fix(1, 1, 1, 1)
 
-    ops.section('Elastic', model.elastic_sec_tag, model.Ec, model.Ag, model.Iz*0.4)
+    ops.section('Elastic', model.elastic_sec_tag, model.Ec, model.Ag, model.Iz*model.k_eff)
 
     ops.geomTransf('PDelta', 1)
 

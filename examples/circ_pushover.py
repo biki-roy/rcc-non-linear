@@ -11,12 +11,12 @@ col_props = {
 
 model = Model(col_props)
 
-print(model.confined_props)
-print(model.unconfined_props)
+# print(model.confined_props)
+# print(model.unconfined_props)
 # print(model.fib_section)
 
 #To plot the fiber section, use any of the following methods:
-model.plot_fib_section()
+# model.plot_fib_section()
 # model.fib_section.plot()
 
 # results_df, bilinear_df, yield_step = model.run_M_phi_analysis()
@@ -24,13 +24,10 @@ results_df, bilinear_df, yield_step = model.run_pushover_analysis()
 
 print(f"Yield occurred at step: {yield_step}")
 print(bilinear_df)
-print(results_df.head(11))
+print("Effective MOI", model.k_eff)
 plot_response_multi(
     dfs=[results_df.iloc[:, 0:2], bilinear_df],
     names=["Original", "Bilinear"],
-    colors=["black", "red"],
-    x_label="Disp",
-    y_label="Force",
-    title="Curves Comparison"
 )
 plot_response(results_df.iloc[:, 2:4])
+print("Effective K", model.k_eff)

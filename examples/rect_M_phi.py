@@ -29,8 +29,5 @@ print(bilinear_df)
 plot_response_multi(
     dfs=[results_df.iloc[:, 0:2], bilinear_df],
     names=["Original", "Bilinear"],
-    colors=["black", "red"],
-    x_label="Curvature",
-    y_label="Moment",
-    title="Curves Comparison"
 )
+print("Effective K", model.k_eff)

@@ -66,6 +66,7 @@ class Model:
 
         db = self.db if self.section_type == "circular" else max(self.dbTop, self.dbBot)
         self.lp = max(0.08 * self.L + 0.15 * self.fy * db, 0.3*db*self.fy)
+        self.m_phi_done = False
         self.create_model()        
 
     def create_model(self):
@@ -132,13 +133,20 @@ class Model:
         self.create_model()  
         results_df, yield_step = moment_curvature_analysis(self, maxK, dK)
         bilinear_df = caltrans_bilinear(results_df, yield_step)
+        self.k_eff = self.get_stiffness_modifier(bilinear_df)
+        self.m_phi_done = True
         return results_df, bilinear_df, yield_step
 
+    def get_stiffness_modifier(self, bilinear_df):
+        phiY, mY = bilinear_df.iloc[1, 0], bilinear_df.iloc[1, 1]
+        I_eff = mY/(phiY*self.Ec)
+        return I_eff/ self.Iz
 
     def run_pushover_analysis(self, maxU=40, dU=0.05):
         from rcc_non_linear.opensees_model.pushover import pushover_analysis
+        if not self.m_phi_done:
+            self.run_M_phi_analysis()
         self.create_model()  
         results_df, yield_step = pushover_analysis(self, maxU, dU)
         bilinear_df = caltrans_bilinear(results_df, yield_step)
         return results_df, bilinear_df, yield_step
-

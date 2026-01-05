@@ -77,29 +77,22 @@ def caltrans_bilinear(df, yield_index):
 
     return bilinear_df
 
-def plot_response(
-    df,
-    x_label="X",
-    y_label="Y",
-    title="Response Curve",
-):
+def plot_response(df, x_label=None, y_label=None, title="Response Curve"):
     import plotly.graph_objects as go
 
     x = df.iloc[:, 0]
     y = df.iloc[:, 1]
 
-    fig = go.Figure()
+    x_label = x_label or df.columns[0]
+    y_label = y_label or df.columns[1]
 
-    fig.add_trace(
+    fig = go.Figure(
         go.Scatter(
             x=x,
             y=y,
             mode="lines",
             line=dict(width=3),
-            hovertemplate=(
-                f"{x_label}: %{{x:.4f}}<br>"
-                f"{y_label}: %{{y:.4f}}<extra></extra>"
-            ),
+            hovertemplate=f"{x_label}: %{{x:.4f}}<br>{y_label}: %{{y:.4f}}<extra></extra>",
         )
     )
 
@@ -108,17 +101,18 @@ def plot_response(
         xaxis_title=x_label,
         yaxis_title=y_label,
         template="plotly_white",
-        hovermode="x unified",
+        # hovermode="x unified",
     )
 
     fig.show()
 
+
 def plot_response_multi(
-    dfs,               # list of 2-column DataFrames
-    names=None,        # list of names for each trace
-    colors=None,       # optional colors
-    x_label="X",
-    y_label="Y",
+    dfs,
+    names=None,
+    colors=None,
+    x_label=None,
+    y_label=None,
     title="Response Curve",
 ):
     import plotly.graph_objects as go
@@ -129,23 +123,27 @@ def plot_response_multi(
         x = df.iloc[:, 0]
         y = df.iloc[:, 1]
 
+        xl = x_label or df.columns[0]
+        yl = y_label or df.columns[1]
+
         fig.add_trace(
             go.Scatter(
                 x=x,
                 y=y,
                 mode="lines",
                 name=names[i] if names else f"Trace {i+1}",
-                line=dict(color=colors[i] if colors else None, width=3),
-                hovertemplate=f"{x_label}: %{{x:.4f}}<br>{y_label}: %{{y:.4f}}<extra></extra>",
+                line=dict(width=3, color=colors[i] if colors else None),
+                hovertemplate=f"{xl}: %{{x:.4f}}<br>{yl}: %{{y:.4f}}<extra></extra>",
             )
         )
 
     fig.update_layout(
         title=title,
-        xaxis_title=x_label,
-        yaxis_title=y_label,
+        xaxis_title=x_label or dfs[0].columns[0],
+        yaxis_title=y_label or dfs[0].columns[1],
         template="plotly_white",
-        hovermode="x unified",
+        # hovermode="x unified",
     )
 
     fig.show()
+
