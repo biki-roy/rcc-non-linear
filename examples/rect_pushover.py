@@ -37,4 +37,5 @@ results_df, bilinear_df, yield_step = model.run_pushover_analysis()
 # plot_response(results_df.iloc[:, 2: 4])
 # print("Effective K", model.k_eff)
 
-model.create_report()
+# model.create_report()
+print("confinement factor is:", model.k_confinement)

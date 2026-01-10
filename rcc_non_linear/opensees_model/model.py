@@ -101,6 +101,7 @@ class Model:
                 fyh=self.fyh, esm=self.esm,
                 nx=self.nx, ny=self.ny
             )
+            self.k_confinement = material.k
         self.confined_props = material.confined_props()
         self.unconfined_props = material.unconfined_props()
         ops.uniaxialMaterial('Concrete01', self.core_tag, *self.confined_props)

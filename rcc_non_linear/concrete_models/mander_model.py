@@ -33,6 +33,7 @@ class RectConcreteMander:
         self.ecu = (
             0.004 + 1.4 * (rho_x + rho_y) * fyh * esm / self.fcc_prime
         )  # ultimate strain
+        self.k = k
 
     def fc(self, e):
         x = e / self.ecc
