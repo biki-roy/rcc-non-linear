@@ -8,7 +8,8 @@ class RectSection:
                  nBarsBot, dbBot,
                  nBarsInt, dbInt,
                  dh, 
-                 sec_tag, core_material, cover_material, bar_material):
+                 sec_tag, core_material, cover_material, bar_material,
+                 divB, divD, divCover):
         import opsvis as opsv
         self.B = B
         self.H = H
@@ -24,6 +25,7 @@ class RectSection:
         self.core_tag = core_material
         self.cover_tag = cover_material
         self.bar_tag = bar_material
+        self.divB, self.divD, self.divCover = divB, divD, divCover
 
         self.AbarTop = math.pi * (dbTop / 2)**2
         self.AbarBot = math.pi * (dbBot / 2)**2
@@ -42,11 +44,11 @@ class RectSection:
 
         # Concrete Patches (Core and Cover)
         #patch('rect', matTag, numSubdivY, numSubdivZ, *crdsI, *crdsJ)
-        self.fib_sec.append(['patch', 'rect', self.core_tag, 20, 1, -self.core_h, -self.core_b, self.core_h, self.core_b])
-        self.fib_sec.append(['patch', 'rect', self.cover_tag, 20, 1, -self.core_h, -self.B/2, self.core_h, -self.core_b])
-        self.fib_sec.append(['patch', 'rect', self.cover_tag, 20, 1, -self.core_h, self.core_b, self.core_h, self.B/2])
-        self.fib_sec.append(['patch', 'rect', self.cover_tag, 2, 1, -self.H/2, -self.B/2, -self.core_h, self.B/2])    #bottom cover
-        self.fib_sec.append(['patch', 'rect', self.cover_tag, 2, 1, self.core_h, -self.B/2, self.H/2, self.B/2])   #top cover
+        self.fib_sec.append(['patch', 'rect', self.core_tag, self.divD, self.divB, -self.core_h, -self.core_b, self.core_h, self.core_b])       #core
+        self.fib_sec.append(['patch', 'rect', self.cover_tag, self.divD, self.divCover, -self.core_h, -self.B/2, self.core_h, -self.core_b])       #right cover
+        self.fib_sec.append(['patch', 'rect', self.cover_tag, self.divD, self.divCover, -self.core_h, self.core_b, self.core_h, self.B/2])     #left cover
+        self.fib_sec.append(['patch', 'rect', self.cover_tag, self.divCover, self.divB, -self.H/2, -self.B/2, -self.core_h, self.B/2])    #bottom cover
+        self.fib_sec.append(['patch', 'rect', self.cover_tag, self.divCover, self.divB, self.core_h, -self.B/2, self.H/2, self.B/2])   #top cover
 
         # Reinforcement Layers with specific areas
         # layer('straight', matTag, numFiber, areaFiber, *start, *end)

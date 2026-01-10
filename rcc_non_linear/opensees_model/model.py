@@ -23,6 +23,9 @@ class Model:
         if self.section_type == "circular":
             self.nBars = props["nBars"]
             self.db = props["db"]
+            self.nAng = props.get("nAng", 30)
+            self.nRad = props.get("nRad", 20)
+            self.nRad_cover= props.get("nRad_cover", 8)
         elif self.section_type == "rectangular":
             self.nBarsTop = props["nBarsTop"]
             self.dbTop = props["dbTop"]
@@ -32,6 +35,10 @@ class Model:
             self.dbInt = props.get("dbInt", 0)
             self.nx = props.get("nx", 2)   # number of transverse bars in x direction
             self.ny = props.get("ny", 2)   # number of transverse bars in y direction
+            self.divB = props.get("divB", 30)
+            self.divD = props.get("divD", 30)
+            self.divCover = props.get("divCover", 5)
+          
         else:
             raise ValueError("Either B and H (rectangular) or D (circular) must be provided.")
 
@@ -102,7 +109,7 @@ class Model:
         if self.section_type == "circular":
             self.fib_section = CircSection(self.D, self.cover, self.Ec,
                                            self.nBars, self.db, self.dh, 
-                                           self.fib_sec_tag, self.core_tag, self.cover_tag, self.bar_tag)
+                                           self.fib_sec_tag, self.core_tag, self.cover_tag, self.bar_tag, self.nAng, self.nRad, self.nRad_cover)
             self.core_h = self.fib_section.R_core
             self.bar_h = self.fib_section.R_bar
         else:
@@ -113,7 +120,8 @@ class Model:
                 nBarsInt=self.nBarsInt, dbInt=self.dbInt,
                 dh=self.dh,
                 sec_tag=self.fib_sec_tag, core_material=self.core_tag,
-                cover_material=self.cover_tag, bar_material=self.bar_tag
+                cover_material=self.cover_tag, bar_material=self.bar_tag,
+                divB = self.divB, divD = self.divD, divCover = self.divCover
             )
             self.core_h = self.fib_section.core_h
             self.bar_h = self.fib_section.bar_h

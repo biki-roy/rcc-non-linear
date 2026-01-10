@@ -5,7 +5,7 @@ class CircSection:
     def __init__(self, D, cover, Ec, 
                  nBars, db,
                  dh, 
-                 sec_tag, core_material, cover_material, bar_material, nAng = 30, nRad = 20, nRad_cover = 6):
+                 sec_tag, core_material, cover_material, bar_material, nAng, nRad, nRad_cover):
         import opsvis as opsv
         self.D, self.cover = D, cover
         self.nBars, self.db = nBars, db
@@ -26,7 +26,7 @@ class CircSection:
         GJ = G * J
 
         self.fib_sec = [
-            ['section', 'Fiber', self.sec_tag, '-GJ', G*J],
+            ['section', 'Fiber', self.sec_tag, '-GJ', GJ],
             ['patch', 'circ', self.core_tag, self.nAng, self.nRad, 0.0, 0.0, 0.0, self.R_core, 0.0, 360.0],
             ['patch', 'circ', self.cover_tag, self.nAng, self.nRad_cover, 0.0, 0.0, self.R_core, self.D/2, 0.0, 360.0],
             ['layer', 'circ', self.bar_tag, self.nBars, self.Ab, 0.0, 0.0, self.R_bar, 0.0, 360.0]
