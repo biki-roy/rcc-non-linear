@@ -9,8 +9,7 @@ from rcc_non_linear.utils.helper import interpolate_z
 
 def load_mander_k():
     data_path = files("rcc_non_linear.concrete_models.data") / "rect_conf_k.csv"
-    return pd.read_csv(data_path)
-
+    return pd.read_csv(data_path, header=None)
 
 class RectConcreteMander:
     def __init__(self, fc_prime, B, H, cover, dh, sh, fyh, esm, nx=2, ny=2):
