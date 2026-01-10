@@ -5,6 +5,8 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
+import matplotlib.pyplot as plt
+from reportlab.platypus import Image
 
 # ---------------------- Helper: DataFrame to Table Data ----------------------
 def df_to_table_data(df, show_index=True):
@@ -226,6 +228,17 @@ def md_to_pdf_reportlab(model, pdf_file="RC_Column_Report.pdf"):
             story.append(Paragraph(f"Interior bars = {model.nBarsInt} (dia {model.dbInt})", styles['Normal']))
     story.append(Spacer(1, 12))
 
+    # ------------------- Fiber Section -------------------
+    story.append(Paragraph("Reinforced Concrete Fiber Section", styles['Heading2']))
+    plots_dir = os.path.join(os.path.dirname(pdf_file), "plots")
+    os.makedirs(plots_dir, exist_ok=True)
+    # Correct: Save directly inside the plot_fib_section method
+    fiber_plot_path = os.path.join(plots_dir, "fiber_section.png")
+    model.plot_fib_section(save_path=fiber_plot_path)  # this saves the figure correctly
+    story.append(Image(fiber_plot_path, width=400, height=250))
+    story.append(Spacer(1, 12))
+
+
     # M-Phi
     if hasattr(model, "df_m_phi"):
         story.append(Paragraph("5. Moment-Curvature Analysis", styles['Heading2']))
@@ -256,6 +269,37 @@ def md_to_pdf_reportlab(model, pdf_file="RC_Column_Report.pdf"):
             story.append(tbl)
             story.append(Spacer(1, 12))
 
+    # -------------------- M-Phi Plot --------------------
+    if hasattr(model, "df_m_phi") and not model.df_m_phi.empty:
+        story.append(Paragraph("Moment-Curvature Curve", styles['Heading3']))
+
+        plt.figure(figsize=(6,4))
+        # Original M-phi curve
+        plt.plot(model.df_m_phi['curvatures'], model.df_m_phi['moments'], 'b-o', label='M-φ Curve')
+
+        # Idealized points if available
+        if hasattr(model, "df_m_phi_idealized"):
+            df_ideal = model.df_m_phi_idealized.copy()
+            points_labels = ["Origin", "Yield", "Idealized Yield", "Ultimate"]
+            plt.plot(df_ideal['curvatures'], df_ideal['moments'], 
+                        color='red', marker='s', label='Idealized Points')
+
+
+        plt.xlabel("Curvature")
+        plt.ylabel("Moment")
+        plt.title("Moment-Curvature")
+        plt.grid(True)
+        plt.legend()
+
+        plots_dir = os.path.join(os.path.dirname(pdf_file), "plots")
+        os.makedirs(plots_dir, exist_ok=True)
+        mp_phi_plot_path = os.path.join(plots_dir, "moment_curvature.png")
+        plt.savefig(mp_phi_plot_path, bbox_inches='tight')
+        plt.close()
+
+        story.append(Image(mp_phi_plot_path, width=400, height=250))
+        story.append(Spacer(1, 12))
+
     # Pushover
     if hasattr(model, "df_pushover"):
         story.append(Paragraph("6. Pushover Analysis", styles['Heading2']))
@@ -285,6 +329,35 @@ def md_to_pdf_reportlab(model, pdf_file="RC_Column_Report.pdf"):
             ]))
             story.append(tbl)
             story.append(Spacer(1, 12))
+
+    # -------------------- Pushover Plot --------------------
+    if hasattr(model, "df_pushover") and not model.df_pushover.empty:
+        story.append(Paragraph("Pushover Curve", styles['Heading3']))
+
+        plt.figure(figsize=(6,4))
+        # Original pushover curve
+        plt.plot(model.df_pushover['displacements'], model.df_pushover['forces'], 'r-o', label='Pushover Curve')
+
+        # Idealized points if available
+        if hasattr(model, "df_pushover_idealized"):
+            df_ideal = model.df_pushover_idealized.copy()
+            points_labels = ["Origin", "Yield", "Idealized Yield", "Ultimate"]
+            plt.plot(df_ideal['displacements'], df_ideal['forces'], 
+                        color='blue', marker='s', label='Idealized Points')
+
+
+        plt.xlabel("Displacement")
+        plt.ylabel("Force")
+        plt.title("Pushover Curve")
+        plt.grid(True)
+        plt.legend()
+
+        pushover_plot_path = os.path.join(plots_dir, "pushover.png")
+        plt.savefig(pushover_plot_path, bbox_inches='tight')
+        plt.close()
+
+        story.append(Image(pushover_plot_path, width=400, height=250))
+        story.append(Spacer(1, 12))
 
     doc.build(story)
     return pdf_file

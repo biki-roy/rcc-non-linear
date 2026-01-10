@@ -128,8 +128,18 @@ class Model:
             self.core_h = self.fib_section.core_h
             self.bar_h = self.fib_section.bar_h
         
-    def plot_fib_section(self):
-        self.fib_section.plot()
+    # def plot_fib_section(self):
+    #     self.fib_section.plot()
+
+    def plot_fib_section(self, save_path=None):
+        self.fib_section.plot()       # draw the figure
+        import matplotlib.pyplot as plt
+        if save_path:                 # if a path is provided
+            plt.savefig(save_path, bbox_inches='tight')  # save current figure
+            plt.close()               # close figure to free memory
+        else:
+            plt.show()                # just display interactively
+
 
     # def create_element(self, analysis_type: str):
     #     import openseespy.opensees as ops
