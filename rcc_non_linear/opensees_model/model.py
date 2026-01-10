@@ -1,8 +1,10 @@
 import math
+import os
 from rcc_non_linear.concrete_models.mander_model import RectConcreteMander, CircConcreteMander
 from rcc_non_linear.opensees_model.rect_section import RectSection
 from rcc_non_linear.opensees_model.circ_section import CircSection
 from rcc_non_linear.utils.helper import caltrans_bilinear 
+from rcc_non_linear.utils.report import create_markdown_report, md_to_pdf_reportlab
 
 class Model:
     def __init__(self, props: dict):
@@ -143,6 +145,7 @@ class Model:
         bilinear_df = caltrans_bilinear(results_df, yield_step)
         self.k_eff = self.get_stiffness_modifier(bilinear_df)
         self.m_phi_done = True
+        self.df_m_phi, self.df_m_phi_idealized = results_df, bilinear_df
         return results_df, bilinear_df, yield_step
 
     def get_stiffness_modifier(self, bilinear_df):
@@ -157,4 +160,20 @@ class Model:
         self.create_model()  
         results_df, yield_step = pushover_analysis(self, maxU, dU)
         bilinear_df = caltrans_bilinear(results_df, yield_step)
+        self.df_pushover, self.df_pushover_idealized = results_df, bilinear_df
         return results_df, bilinear_df, yield_step
+
+
+    def create_report(self, filename="RC_Column_Report", out_dir=None, generate_pdf=True):
+        """
+        Create Markdown and PDF report.
+        """
+        # Markdown
+        md_path = create_markdown_report(self, filename=filename+".md", out_dir=out_dir)
+        
+        if generate_pdf:
+            pdf_path = md_to_pdf_reportlab(self, pdf_file=os.path.join(out_dir or "results", filename+".pdf"))
+            return pdf_path
+
+        return md_path
+

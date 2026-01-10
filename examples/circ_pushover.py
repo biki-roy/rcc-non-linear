@@ -22,12 +22,13 @@ model = Model(col_props)
 # results_df, bilinear_df, yield_step = model.run_M_phi_analysis()
 results_df, bilinear_df, yield_step = model.run_pushover_analysis()
 
-print(f"Yield occurred at step: {yield_step}")
-print(bilinear_df)
-print("Effective MOI", model.k_eff)
-plot_response_multi(
-    dfs=[results_df.iloc[:, 0:2], bilinear_df],
-    names=["Original", "Bilinear"],
-)
-plot_response(results_df.iloc[:, 2:4])
-print("Effective K", model.k_eff)
+# print(f"Yield occurred at step: {yield_step}")
+# print(results_df)
+# print("Effective MOI", model.k_eff)
+# plot_response_multi(
+#     dfs=[results_df.iloc[:, 0:2], bilinear_df],
+#     names=["Original", "Bilinear"],
+# )
+# plot_response(results_df.iloc[:, 2:4])
+# print("Effective K", model.k_eff)
+model.create_report()

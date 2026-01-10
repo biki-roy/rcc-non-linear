@@ -29,13 +29,14 @@ def pushover_analysis(model, maxU, dU):
     results = {
         'displacements': [0.0], 'forces': [0.0],
         'Eps_Conc': [0.0], 'Sig_Conc': [0.0],
-        'Eps_Steel': [0.0], 'Sig_Steel': [0.0]
+        'Eps_Steel': [0.0], 'Sig_Steel': [0.0],
+        'drift %': [0.0]
     }
     peak_force = 0.0
     curr_disp = 0.0
     yield_disp = None
     step = 0
-
+    yield_step = None
     while curr_disp < maxU:
         ok = ops.analyze(1)
         if ok != 0: break
@@ -69,6 +70,7 @@ def pushover_analysis(model, maxU, dU):
         results['Sig_Conc'].append(sig_c)
         results['Eps_Steel'].append(eps_s)
         results['Sig_Steel'].append(sig_s)
+        results['drift %'].append(curr_disp*100/model.L)
 
         # Termination Checks
         if curr_force < 0.85 * peak_force:
@@ -79,8 +81,7 @@ def pushover_analysis(model, maxU, dU):
             break
         if eps_s > model.e_ult:
             print(f"⚠️ Steel ruptured at displacement = {curr_disp:.6f}")
-            break
-        
+            break   
     results_df = pd.DataFrame(results)
     return results_df, yield_step
 
