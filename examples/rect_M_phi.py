@@ -23,9 +23,9 @@ model = Model(col_props)
 model.plot_fib_section()
 # model.fib_section.plot()
 #To run moment-curvature analysis:
-results_df, bilinear_df, yield_step = model.run_M_phi_analysis()
+# results_df, bilinear_df, yield_step = model.run_M_phi_analysis()
 # print(f"Yield occurred at step: {yield_step}")
-print(bilinear_df)
+# print(bilinear_df)
 
 # plot_response_multi(
 #     dfs=[results_df.iloc[:, 0:2], bilinear_df],

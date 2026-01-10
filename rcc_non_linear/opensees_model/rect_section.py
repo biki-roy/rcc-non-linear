@@ -82,4 +82,4 @@ class RectSection:
         opsv.plot_fiber_section(self.fib_sec, fillflag=1, matcolor=['gold', 'lightgrey', 'red'])
         plt.title("Rectangular Column Fiber Section")
         plt.axis('equal')
-        plt.show()
+        # plt.show()

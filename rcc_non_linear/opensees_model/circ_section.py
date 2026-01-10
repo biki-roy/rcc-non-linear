@@ -42,6 +42,6 @@ class CircSection:
         opsv.plot_fiber_section(self.fib_sec, fillflag=1, matcolor=['gold', 'lightgrey', 'red'])
         plt.title("Circular Column Fiber Section")
         plt.axis('equal')
-        plt.show()
+        # plt.show()
 
 
