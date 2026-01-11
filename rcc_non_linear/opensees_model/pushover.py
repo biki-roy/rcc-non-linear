@@ -1,6 +1,6 @@
 from rcc_non_linear.opensees_model.gravity import run_gravity_analysis
 import pandas as pd
-def pushover_analysis(model, maxU, dU):
+def pushover_analysis(model, maxU, dU, self_wt):
     import openseespy.opensees as ops
     ops.node(1, 0.0, 0.0)
     ops.node(2, 0.0, model.L)
@@ -15,7 +15,10 @@ def pushover_analysis(model, maxU, dU):
 
     ops.element('forceBeamColumn', 1, *[1, 2], 1, 1)
     
-    run_gravity_analysis(model.P_axial, type="pushover")
+    col_wt = (0.15 / 12**3) * model.Ag * model.L if self_wt else 0.0
+    total_wt = model.P_axial + col_wt/2
+    print("Total axial load applied on column:", total_wt)
+    run_gravity_analysis(total_wt, type="pushover")
 
     # Apply moment through node 2 rotation
     ops.timeSeries('Linear', 2)

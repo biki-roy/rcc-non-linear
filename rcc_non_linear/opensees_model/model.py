@@ -164,12 +164,12 @@ class Model:
         I_eff = mY/(phiY*self.Ec)
         return I_eff/ self.Iz
 
-    def run_pushover_analysis(self, maxU=40, dU=0.05):
+    def run_pushover_analysis(self, maxU=40, dU=0.05, self_wt=True):
         from rcc_non_linear.opensees_model.pushover import pushover_analysis
         if not self.m_phi_done:
             self.run_M_phi_analysis()
         self.create_model()  
-        results_df, yield_step = pushover_analysis(self, maxU, dU)
+        results_df, yield_step = pushover_analysis(self, maxU, dU, self_wt)
         bilinear_df = caltrans_bilinear(results_df, yield_step)
         self.df_pushover, self.df_pushover_idealized = results_df, bilinear_df
         return results_df, bilinear_df, yield_step

@@ -1,6 +1,7 @@
 from rcc_non_linear import RectConcreteMander, CircConcreteMander
 
-mander = RectConcreteMander(4.5, 48, 24, 2, 0.5, 3, 68, 0.12, 3, 4)
+#Sharma et al
+mander = RectConcreteMander(5.366, 23.622, 23.622, 1.5748, 0.5118, 3.937, 44.128, 0.0962, 5, 5)
 print(mander.confined_props())
 print(mander.unconfined_props())
 print("k confinement is:", mander.k)
@@ -9,3 +10,4 @@ print("k confinement is:", mander.k)
 # )
 # print(concrete.confined_props())
 # print(concrete.unconfined_props())
+
