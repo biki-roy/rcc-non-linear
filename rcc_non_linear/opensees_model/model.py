@@ -1,6 +1,6 @@
 import math
 import os
-from rcc_non_linear.concrete_models.mander_model import RectConcreteMander, CircConcreteMander
+from rcc_non_linear.concrete_models.mander_model import RectConcreteMander, CircConcreteMander, SteelMander
 from rcc_non_linear.opensees_model.rect_section import RectSection
 from rcc_non_linear.opensees_model.circ_section import CircSection
 from rcc_non_linear.utils.helper import caltrans_bilinear 
@@ -157,7 +157,8 @@ class Model:
         ops.uniaxialMaterial('Concrete01', self.core_tag, *self.confined_props)
         ops.uniaxialMaterial('Concrete01', self.cover_tag, *self.unconfined_props)
         ops.uniaxialMaterial('ReinforcingSteel', self.bar_tag, self.fy, self.fu, self.Es, self.Esh, self.e_sh, self.e_ult)
-        self.material = material
+        self.concrete = material
+        self.steel = SteelMander(self.fy, self.fu, self.Es, self.Esh, self.e_sh, self.e_ult)
     
     def define_section(self):
         if self.section_type == "circular":

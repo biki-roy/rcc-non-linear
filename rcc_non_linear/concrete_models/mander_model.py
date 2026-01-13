@@ -33,21 +33,22 @@ class RectConcreteMander:
             0.004 + 1.4 * (rho_x + rho_y) * fyh * esm / self.fcc_prime
         )  # ultimate strain
         self.k = k
+        self.Ec = 57 * math.sqrt(self.fc_prime * 1000)
 
-    def fc(self, e):
-        x = e / self.ecc
-        Ec = 57 * math.sqrt(self.fc_prime * 1000)
-        Esec = self.fcc_prime / self.ecc
-        r = Ec / (Ec - Esec)
-        fc = self.fcc_prime * x * r / (r - 1 + x**r)
+    def fc(self, e, ecc, fcc):
+        """gives concrete stress at strain e. fcc is the peak stress at strain of ecc."""
+        x = e / ecc
+        Esec = fcc / ecc
+        r = self.Ec / (self.Ec - Esec)
+        fc = fcc * x * r / (r - 1 + x**r)
         return fc
 
     def confined_props(self):
-        fc = self.fc(self.ecu)
+        fc = self.fc(self.ecu, self.ecc, self.fcc_prime)
         return [-self.fcc_prime, -self.ecc, -fc, -self.ecu]
 
     def unconfined_props(self):
-        fc = self.fc(0.005)
+        fc = self.fc(0.005, 0.002, self.fc_prime)
         return [-self.fc_prime, -0.002, -0, -0.005]  # 0 to be replaced by fc
 
 
@@ -61,31 +62,35 @@ class CircConcreteMander:
         self.esm = esm
         self.rho = 4 * Asp / (self.ds * sh)
         self.Ec = 57 * math.sqrt(fc_prime * 1000)
-
-    def fcc_prime(self):
         k1 = 2.254 * math.sqrt(1 + 7.94 * self.fl_prime / self.fc_prime)
-        return self.fc_prime * (-1.254 + k1 - 2 * self.fl_prime / self.fc_prime)
+        self.fcc_prime = self.fc_prime * (-1.254 + k1 - 2 * self.fl_prime / self.fc_prime)
+        self.ecc = 0.002 * (1 + 5 * (self.fcc_prime / self.fc_prime - 1))
+        self.ecu = 0.004 + 1.4 * self.rho * self.fyh * self.esm / self.fcc_prime
 
-    def ecc(self):
-        return 0.002 * (1 + 5 * (self.fcc_prime() / self.fc_prime - 1))
-
-    def ecu(self):
-        return 0.004 + 1.4 * self.rho * self.fyh * self.esm / self.fcc_prime()
-
-    def fc(self, e, fcc_prime, ecc):
+    def fc(self, e, ecc, fcc):
+        """gives concrete stress at strain e. fcc is the peak stress at strain of ecc."""
         x = e / ecc
-        Esec = fcc_prime / ecc
+        Esec = fcc / ecc
         r = self.Ec / (self.Ec - Esec)
-        fc = fcc_prime * x * r / (r - 1 + x**r)
+        fc = fcc * x * r / (r - 1 + x**r)
         return fc
-
+    
     def confined_props(self):
-        fcc_prime = self.fcc_prime()
-        ecc = self.ecc()
-        ecu = self.ecu()
-        fc = self.fc(ecu, fcc_prime, ecc)
-        return [-fcc_prime, -ecc, -fc, -ecu]
+        fc = self.fc(self.ecu, self.ecc, self.fcc_prime)
+        return [-self.fcc_prime, -self.ecc, -fc, -self.ecu]
 
     def unconfined_props(self):
-        fc = self.fc(0.005, self.fc_prime, 0.002)
+        fc = self.fc(0.005, 0.002, self.fc_prime)
         return [-self.fc_prime, -0.002, -0, -0.005]  # 0 to be replaced by fc
+    
+class SteelMander:
+    def __init__(self, fy, fu, Es, Esh, esh, esu):
+        self.fy, self.fu, self.Es, self.Esh, self.esh, self.esu = fy, fu, Es, Esh, esh, esu
+        self.p = self.Esh * (self.esu - self.esh) / (self.fu - self.fy)
+        self.ey = self.fy / self.Es
+    def get_fs(self, es):
+        if es >= 0 and es <= self.ey: return self.Es * es
+        elif es > self.ey and es <= self.esh: return self.fy
+        else:
+            return self.fu + (self.fy-self.fu) * abs((self.esu-es)/(self.esu - self.esh)) ** self.p
+
