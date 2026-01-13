@@ -1,4 +1,6 @@
 import math
+import numpy as np
+
 try:
     from importlib.resources import files  # Python ≥3.9
 except ImportError:
@@ -7,9 +9,11 @@ except ImportError:
 import pandas as pd
 from rcc_non_linear.utils.helper import interpolate_z
 
+
 def load_mander_k():
     data_path = files("rcc_non_linear.concrete_models.data") / "rect_conf_k.csv"
     return pd.read_csv(data_path, header=None)
+
 
 class RectConcreteMander:
     def __init__(self, fc_prime, B, H, cover, dh, sh, fyh, esm, nx=2, ny=2):
@@ -63,7 +67,9 @@ class CircConcreteMander:
         self.rho = 4 * Asp / (self.ds * sh)
         self.Ec = 57 * math.sqrt(fc_prime * 1000)
         k1 = 2.254 * math.sqrt(1 + 7.94 * self.fl_prime / self.fc_prime)
-        self.fcc_prime = self.fc_prime * (-1.254 + k1 - 2 * self.fl_prime / self.fc_prime)
+        self.fcc_prime = self.fc_prime * (
+            -1.254 + k1 - 2 * self.fl_prime / self.fc_prime
+        )
         self.ecc = 0.002 * (1 + 5 * (self.fcc_prime / self.fc_prime - 1))
         self.ecu = 0.004 + 1.4 * self.rho * self.fyh * self.esm / self.fcc_prime
 
@@ -74,7 +80,7 @@ class CircConcreteMander:
         r = self.Ec / (self.Ec - Esec)
         fc = fcc * x * r / (r - 1 + x**r)
         return fc
-    
+
     def confined_props(self):
         fc = self.fc(self.ecu, self.ecc, self.fcc_prime)
         return [-self.fcc_prime, -self.ecc, -fc, -self.ecu]
@@ -82,15 +88,38 @@ class CircConcreteMander:
     def unconfined_props(self):
         fc = self.fc(0.005, 0.002, self.fc_prime)
         return [-self.fc_prime, -0.002, -0, -0.005]  # 0 to be replaced by fc
-    
+
+
 class SteelMander:
     def __init__(self, fy, fu, Es, Esh, esh, esu):
-        self.fy, self.fu, self.Es, self.Esh, self.esh, self.esu = fy, fu, Es, Esh, esh, esu
+        self.fy, self.fu, self.Es, self.Esh, self.esh, self.esu = (
+            fy,
+            fu,
+            Es,
+            Esh,
+            esh,
+            esu,
+        )
         self.p = self.Esh * (self.esu - self.esh) / (self.fu - self.fy)
         self.ey = self.fy / self.Es
-    def get_fs(self, es):
-        if es >= 0 and es <= self.ey: return self.Es * es
-        elif es > self.ey and es <= self.esh: return self.fy
-        else:
-            return self.fu + (self.fy-self.fu) * abs((self.esu-es)/(self.esu - self.esh)) ** self.p
 
+    def fs(self, es):
+        if es >= 0 and es <= self.ey:
+            return self.Es * es
+        elif es > self.ey and es <= self.esh:
+            return self.fy
+        else:
+            return (
+                self.fu
+                + (self.fy - self.fu)
+                * abs((self.esu - es) / (self.esu - self.esh)) ** self.p
+            )
+
+    def get_fs(self, es):
+        """
+        Element-wise evaluation of fs for array-like input.
+        """
+        if np.isscalar(es):
+            return self.fs(es)
+        es = np.asarray(es, dtype=float)
+        return np.array([self.fs(e) for e in es])
