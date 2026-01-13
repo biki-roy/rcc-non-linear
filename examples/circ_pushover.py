@@ -10,6 +10,7 @@ col_props = {
 }
 
 model = Model(col_props)
+print(model.material.confined_props())
 
 # print(model.confined_props)
 # print(model.unconfined_props)
@@ -20,7 +21,7 @@ model = Model(col_props)
 # model.fib_section.plot()
 
 # results_df, bilinear_df, yield_step = model.run_M_phi_analysis()
-results_df, bilinear_df, yield_step = model.run_pushover_analysis()
+# results_df, bilinear_df, yield_step = model.run_pushover_analysis()
 
 # print(f"Yield occurred at step: {yield_step}")
 # print(results_df)
@@ -31,4 +32,4 @@ results_df, bilinear_df, yield_step = model.run_pushover_analysis()
 # )
 # plot_response(results_df.iloc[:, 2:4])
 # print("Effective K", model.k_eff)
-model.create_report()
+# model.create_report()

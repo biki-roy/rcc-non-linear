@@ -27,7 +27,7 @@ model = Model(col_props)
 results_df, bilinear_df, yield_step = model.run_pushover_analysis()
 
 # print(f"Yield occurred at step: {yield_step}")
-# print(bilinear_df)
+print(bilinear_df)
 
 # plot_response_multi(
 #     dfs=[results_df.iloc[:, 0:2], bilinear_df],

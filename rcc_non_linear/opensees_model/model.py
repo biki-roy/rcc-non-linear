@@ -9,7 +9,57 @@ from rcc_non_linear.utils.report import create_markdown_report, md_to_pdf_report
 class Model:
     def __init__(self, props: dict):
         """
-        props: dictionary containing column properties
+        Initialize a reinforced concrete column model.
+        -----------
+        props : dict
+            Dictionary containing geometric, material, reinforcement, and axial load on the column excluding self-weight. The model supports both rectangular and
+            circular cross-sections, which are automatically detected based on
+            the provided keys.
+
+            Required general properties:
+            - fc : Unconfined concrete compressive strength
+            - L  : Column length
+            - cover : Concrete cover
+
+            Geometry definition (one of the following must be provided):
+            - Rectangular section:
+                B : Width of section (normal to the direction of lateral load)
+                H : Depth of section (along the direction of lateral load)
+            - Circular section:
+                D : Diameter of section
+
+            Longitudinal reinforcement:
+            - Circular section:
+                nBars : Number of longitudinal bars
+                db    : Diameter of longitudinal bars
+            - Rectangular section:
+                nBarsTop, dbTop : Number and diameter of top bars
+                nBarsBot, dbBot : Number and diameter of bottom bars
+                nBarsInt, dbInt : Intermediate bars (default=0)
+                nx: Number of transverse bar legs in x-direction (default = 2) 
+                ny: Number of transverse bar legs in y-direction (default = 2) 
+
+            Longitudinal reinforcement properties:
+            - fy : Longitudinal reinforcement yield strength
+            - fu : Longitudinal reinforcement ultimate strength
+            - Es   : Elastic modulus of steel (default = 29000)
+            - Esh  : Strain hardening modulus (default = 0.043 × Es)
+            - e_sh : Strain at onset of hardening (default = 0.005)
+            - e_ult: Ultimate strain (default = 0.1)
+
+            Transverse reinforcement properties:
+            - dh : Transverse reinforcement diameter
+            - sh : Transverse reinforcement spacing
+            - fyh : Yield strength (default = 68)
+            - fuh : Ultimate strength (default = 95)
+            - esm : Ultimate strain (default = 0.1)
+
+            Loading:
+            - P_axial : Applied axial load (default = 0.0)
+
+            Discretization parameters:
+            - Circular: nAng (default = 30), nRad (default = 20), nRad_cover (default = 8)
+            - Rectangular: div (default = 30), divD (default = 30), divCover (default = 5)
         """
         # Geometry & materials
         self.fc = props["fc"]
@@ -107,6 +157,7 @@ class Model:
         ops.uniaxialMaterial('Concrete01', self.core_tag, *self.confined_props)
         ops.uniaxialMaterial('Concrete01', self.cover_tag, *self.unconfined_props)
         ops.uniaxialMaterial('ReinforcingSteel', self.bar_tag, self.fy, self.fu, self.Es, self.Esh, self.e_sh, self.e_ult)
+        self.material = material
     
     def define_section(self):
         if self.section_type == "circular":
@@ -129,9 +180,6 @@ class Model:
             self.core_h = self.fib_section.core_h
             self.bar_h = self.fib_section.bar_h
         
-    # def plot_fib_section(self):
-    #     self.fib_section.plot()
-
     def plot_fib_section(self, save_path=None):
         self.fib_section.plot()       # draw the figure
         import matplotlib.pyplot as plt
@@ -140,14 +188,6 @@ class Model:
             plt.close()               # close figure to free memory
         else:
             plt.show()                # just display interactively
-
-
-    # def create_element(self, analysis_type: str):
-    #     import openseespy.opensees as ops
-    #     ops.node(1, 0.0, 0.0)
-    #     ops.node(2, 0.0, 0.0) if analysis_type=="moment-curvature" else ops.node(2, self.L, 0.0)
-    #     ops.fix(1, 1, 1, 1)
-    #     ops.mass(2, 1.0, 1.0, 1.0)
 
     def run_M_phi_analysis(self, maxK=0.01, dK=0.00001):
         from rcc_non_linear.opensees_model.m_phi import moment_curvature_analysis
@@ -173,7 +213,6 @@ class Model:
         bilinear_df = caltrans_bilinear(results_df, yield_step)
         self.df_pushover, self.df_pushover_idealized = results_df, bilinear_df
         return results_df, bilinear_df, yield_step
-
 
     def create_report(self, filename="RC_Column_Report", out_dir=None, generate_pdf=True):
         """
