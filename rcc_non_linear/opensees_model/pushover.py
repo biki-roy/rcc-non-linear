@@ -1,5 +1,8 @@
 from rcc_non_linear.opensees_model.gravity import run_gravity_analysis
+from rcc_non_linear.opensees_model.circ_section import circular_column_bar_fibers
 import pandas as pd
+import numpy as np
+
 def pushover_analysis(model, maxU, dU, self_wt):
     import openseespy.opensees as ops
     ops.node(1, 0.0, 0.0)
@@ -20,7 +23,6 @@ def pushover_analysis(model, maxU, dU, self_wt):
     print("Total axial load applied on column:", total_wt)
     run_gravity_analysis(total_wt, type="pushover")
 
-    # Apply moment through node 2 rotation
     ops.timeSeries('Linear', 2)
     ops.pattern('Plain', 2, 2)
     ops.load(2, 1.0, 0.0, 0.0)
@@ -40,6 +42,14 @@ def pushover_analysis(model, maxU, dU, self_wt):
     yield_disp = None
     step = 0
     yield_step = None
+
+    if model.section_type == "circular":
+        bar_fibers = circular_column_bar_fibers(model.bar_h, model.nBars)
+        ruptured_bars = set()
+        rupture_limit = max(1, int(np.floor(model.rupture_limit * model.nBars)))
+        model.bar_fibers = bar_fibers
+        model.ruptured_bars = ruptured_bars
+
     while curr_disp < maxU:
         ok = ops.analyze(1)
         if ok != 0: break
@@ -57,7 +67,21 @@ def pushover_analysis(model, maxU, dU, self_wt):
         # --- Fiber Responses ---
         if model.section_type == "circular":
             sig_c, eps_c = ops.eleResponse(1, 'section', model.fib_sec_tag, 'fiber', -model.core_h, 0.0, model.core_tag, 'stressStrain')
-            sig_s, eps_s  = ops.eleResponse(1, 'section', model.fib_sec_tag, 'fiber', model.bar_h, 0.0, model.bar_tag, 'stressStrain')   
+            
+            sig_s, eps_s  = ops.eleResponse(1, 'section', model.fib_sec_tag, 'fiber', model.bar_h, 0.0, model.bar_tag, 'stressStrain')  #outermost fiber only
+
+
+            for _, row in bar_fibers.iterrows():
+                y, z = row['y'], row['z']
+                bar_id = row['bar_id']
+                sig_bar, eps_bar = ops.eleResponse(
+                    1,
+                    'section', model.fib_sec_tag,
+                    'fiber', y, z, model.bar_tag,
+                    'stressStrain'
+                )
+                if eps_bar > model.e_ult: ruptured_bars.add(int(bar_id))
+
         else:
             sig_c, eps_c = ops.eleResponse(1, 'section', model.fib_sec_tag, 'fiber', model.core_h, 0.0, model.core_tag, 'stressStrain')
             sig_s, eps_s  = ops.eleResponse(1, 'section', model.fib_sec_tag, 'fiber', -model.bar_h, 0.0, model.bar_tag, 'stressStrain')
@@ -76,15 +100,20 @@ def pushover_analysis(model, maxU, dU, self_wt):
         results['drift %'].append(curr_disp*100/model.L)
 
         # Termination Checks
-        if curr_force < 0.85 * peak_force:
+        if  "strength" in model.failure_criteria and curr_force < 0.85 * peak_force:
             print(f"⚠️ Strength drop at displacement = {curr_disp:.6f}")
             break
-        if eps_c < model.confined_props[-1]:
+        if "core" in model.failure_criteria and eps_c < model.confined_props[-1]:
             print(f"⚠️ Concrete crushed at displacement = {curr_disp:.6f}")
             break
-        if eps_s > model.e_ult:
+        if "rebar" in model.failure_criteria and eps_s > model.e_ult and model.section_type == "rectangular":
             print(f"⚠️ Steel ruptured at displacement = {curr_disp:.6f}")
-            break   
+            break
+        if "rebar" in model.failure_criteria and model.section_type == "circular" and len(ruptured_bars) >= rupture_limit:
+            print(f"⚠️  {len(ruptured_bars)} / {model.nBars} bars having IDs {ruptured_bars} ruptured at displacement = {curr_disp:.6f}")
+            model.ruptured_bars = ruptured_bars
+            break
+    
     results_df = pd.DataFrame(results)
     return results_df, yield_step
 

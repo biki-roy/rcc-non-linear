@@ -78,6 +78,7 @@ class Model:
             self.nAng = props.get("nAng", 30)
             self.nRad = props.get("nRad", 20)
             self.nRad_cover= props.get("nRad_cover", 8)
+            self.rupture_limit = props.get("rupture_limit", 0.2)
         elif self.section_type == "rectangular":
             self.nBarsTop = props["nBarsTop"]
             self.dbTop = props["dbTop"]
@@ -110,7 +111,8 @@ class Model:
 
         self.core_tag, self.cover_tag, self.bar_tag = 1, 2, 3  # material tags
         self.fib_sec_tag, self.elastic_sec_tag = 1, 2
-
+        self.failure_criteria = props.get("failure_criteria" , ["core","rebar","strength" ])
+        
         # Derived
         self.Ec = 57 * math.sqrt(self.fc * 1000)
 
@@ -205,7 +207,8 @@ class Model:
         I_eff = mY/(phiY*self.Ec)
         return I_eff/ self.Iz
 
-    def run_pushover_analysis(self, maxU=40, dU=0.05, self_wt=True):
+    def run_pushover_analysis(self, maxU=None, dU=0.05, self_wt=True):
+        if maxU is None: maxU = 0.2 * self.L
         from rcc_non_linear.opensees_model.pushover import pushover_analysis
         if not self.m_phi_done:
             self.run_M_phi_analysis()

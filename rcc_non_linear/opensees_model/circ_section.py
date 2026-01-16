@@ -1,4 +1,6 @@
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import math
 
 class CircSection:
@@ -43,5 +45,29 @@ class CircSection:
         plt.title("Circular Column Fiber Section")
         plt.axis('equal')
         # plt.show()
+
+def symmetric_angles(nBars):
+  ang = 2 * np.pi / nBars
+  theta = [0]
+  k = 1
+  while len(theta) < nBars:
+    theta.append(k * ang)
+    if len(theta) < nBars:
+        theta.append(-k * ang)
+    k += 1
+  return np.array(theta)
+
+def circular_column_bar_fibers(r_bar, nBars):
+    theta = symmetric_angles(nBars)
+
+    y = r_bar * np.cos(theta)
+    z = r_bar * np.sin(theta)
+
+    return pd.DataFrame({
+        'bar_id': np.arange(1, nBars + 1),
+        'y': y,
+        'z': z
+    })
+
 
 
