@@ -77,6 +77,14 @@ def caltrans_bilinear(df, yield_index):
 
     return bilinear_df
 
+def get_disp_mPhi(model):
+    curvs = model.df_m_phi_idealized["curvatures"]
+    curv_yi, curv_u = curvs[2].item(), curvs[3].item()
+    disp_yi = curv_yi * model.L**2 /3
+    disp_p = (curv_u-curv_yi)*model.lp*(model.L-model.lp/2)
+    disp_u = disp_yi + disp_p
+    return disp_yi, disp_u
+
 def plot_response(df, x_label=None, y_label=None, title="Response Curve"):
     import plotly.graph_objects as go
 

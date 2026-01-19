@@ -7,6 +7,7 @@ from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 import matplotlib.pyplot as plt
 from reportlab.platypus import Image
+from rcc_non_linear.utils.helper import get_disp_mPhi
 
 # ---------------------- Helper: DataFrame to Table Data ----------------------
 def df_to_table_data(df, show_index=True):
@@ -172,7 +173,8 @@ def md_to_pdf_reportlab(model, pdf_file="RC_Column_Report.pdf"):
 
     # Header
     story.append(Paragraph("RC Column Nonlinear Analysis Report", styles['Title']))
-    story.append(Paragraph(f"Generated on: {datetime.datetime.now():%Y-%m-%d %H:%M:%S}", styles['Normal']))
+    story.append(Paragraph(f"Generated on: {datetime.datetime.now():%Y-%m-%d | %H:%M:%S}", styles['Normal']))
+    story.append(Paragraph("Units: kips, in", styles['Normal']))
     story.append(Spacer(1, 12))
 
     # Geometry
@@ -253,6 +255,7 @@ def md_to_pdf_reportlab(model, pdf_file="RC_Column_Report.pdf"):
             ('ALIGN', (0,0), (-1,-1), 'RIGHT')
         ]))
         story.append(tbl)
+        story.append(Paragraph(f"Mode of failure: {model.failure_mode_mPhi}"))
         story.append(Spacer(1, 6))
 
         if hasattr(model, "df_m_phi_idealized"):
@@ -267,6 +270,9 @@ def md_to_pdf_reportlab(model, pdf_file="RC_Column_Report.pdf"):
                 ('ALIGN', (0,0), (-1,-1), 'RIGHT')
             ]))
             story.append(tbl)
+            disp_yi, disp_u = get_disp_mPhi(model)
+            story.append(Paragraph("Displacement based on idealized moment-curvature", styles['Heading4']))
+            story.append(Paragraph(f"Idealized yield disp = {disp_yi:.3f} in & Ultimate disp = {disp_u:.3f} in"))
             story.append(Spacer(1, 12))
 
     # -------------------- M-Phi Plot --------------------
@@ -275,7 +281,7 @@ def md_to_pdf_reportlab(model, pdf_file="RC_Column_Report.pdf"):
 
         plt.figure(figsize=(6,4))
         # Original M-phi curve
-        plt.plot(model.df_m_phi['curvatures'], model.df_m_phi['moments'], 'b-o', label='M-φ Curve')
+        plt.plot(model.df_m_phi['curvatures'], model.df_m_phi['moments'], 'b', label='M-φ Curve')
 
         # Idealized points if available
         if hasattr(model, "df_m_phi_idealized"):
@@ -314,6 +320,7 @@ def md_to_pdf_reportlab(model, pdf_file="RC_Column_Report.pdf"):
             ('ALIGN', (0,0), (-1,-1), 'RIGHT')
         ]))
         story.append(tbl)
+        story.append(Paragraph(f"Mode of failure: {model.failure_mode_pushover}"))
         story.append(Spacer(1, 6))
 
         if hasattr(model, "df_pushover_idealized"):
@@ -336,14 +343,14 @@ def md_to_pdf_reportlab(model, pdf_file="RC_Column_Report.pdf"):
 
         plt.figure(figsize=(6,4))
         # Original pushover curve
-        plt.plot(model.df_pushover['displacements'], model.df_pushover['forces'], 'r-o', label='Pushover Curve')
+        plt.plot(model.df_pushover['displacements'], model.df_pushover['forces'], 'b', label='Pushover Curve')
 
         # Idealized points if available
         if hasattr(model, "df_pushover_idealized"):
             df_ideal = model.df_pushover_idealized.copy()
             points_labels = ["Origin", "Yield", "Idealized Yield", "Ultimate"]
             plt.plot(df_ideal['displacements'], df_ideal['forces'], 
-                        color='blue', marker='s', label='Idealized Points')
+                        color='red', marker='s', label='Idealized Points')
 
 
         plt.xlabel("Displacement")

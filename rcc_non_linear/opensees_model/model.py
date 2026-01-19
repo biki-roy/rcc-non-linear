@@ -215,6 +215,7 @@ class Model:
         self.create_model()  
         results_df, yield_step = pushover_analysis(self, maxU, dU, self_wt)
         bilinear_df = caltrans_bilinear(results_df, yield_step)
+        bilinear_df["drift %"] = bilinear_df["displacements"] *100 / self.L 
         self.df_pushover, self.df_pushover_idealized = results_df, bilinear_df
         return results_df, bilinear_df, yield_step
 

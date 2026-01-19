@@ -102,15 +102,19 @@ def pushover_analysis(model, maxU, dU, self_wt):
         # Termination Checks
         if  "strength" in model.failure_criteria and curr_force < 0.85 * peak_force:
             print(f"⚠️ Strength drop at displacement = {curr_disp:.6f}")
+            model.failure_mode_pushover = "strength"
             break
         if "core" in model.failure_criteria and eps_c < model.confined_props[-1]:
             print(f"⚠️ Concrete crushed at displacement = {curr_disp:.6f}")
+            model.failure_mode_pushover = "core"
             break
         if "rebar" in model.failure_criteria and eps_s > model.e_ult and model.section_type == "rectangular":
             print(f"⚠️ Steel ruptured at displacement = {curr_disp:.6f}")
+            model.failure_mode_pushover = "rebar"
             break
         if "rebar" in model.failure_criteria and model.section_type == "circular" and len(ruptured_bars) >= rupture_limit:
             print(f"⚠️  {len(ruptured_bars)} / {model.nBars} bars having IDs {ruptured_bars} ruptured at displacement = {curr_disp:.6f}")
+            model.failure_mode_pushover = "rebar"
             model.ruptured_bars = ruptured_bars
             break
     

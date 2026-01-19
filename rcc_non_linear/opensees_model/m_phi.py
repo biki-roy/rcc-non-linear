@@ -58,12 +58,15 @@ def moment_curvature_analysis(model, maxK, dK):
         # Termination Checks
         if curr_moment < 0.85 * peak_moment:
             print(f"⚠️ Strength drop at curvature = {curr_K:.6f}")
+            model.failure_mode_mPhi = "strength"
             break
         if eps_c < model.confined_props[-1]:
             print(f"⚠️ Concrete crushed at curvature = {curr_K:.6f}")
+            model.failure_mode_mPhi = "core"
             break
         if eps_s > model.e_ult:
             print(f"⚠️ Steel ruptured at curvature = {curr_K:.6f}")
+            model.failure_mode_mPhi = "rebar"
             break
         
     results_df = pd.DataFrame(results)
