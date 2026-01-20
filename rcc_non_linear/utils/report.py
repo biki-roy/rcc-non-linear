@@ -6,7 +6,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 import matplotlib.pyplot as plt
-from reportlab.platypus import Image
+from reportlab.platypus import Image, PageBreak
 from rcc_non_linear.utils.helper import get_disp_mPhi
 
 # ---------------------- Helper: DataFrame to Table Data ----------------------
@@ -175,23 +175,24 @@ def md_to_pdf_reportlab(model, pdf_file="RC_Column_Report.pdf"):
     story.append(Paragraph("RC Column Nonlinear Analysis Report", styles['Title']))
     story.append(Paragraph(f"Generated on: {datetime.datetime.now():%Y-%m-%d | %H:%M:%S}", styles['Normal']))
     story.append(Paragraph("Units: kips, in", styles['Normal']))
-    story.append(Spacer(1, 12))
+    story.append(Spacer(1, 5))
 
     # Geometry
-    story.append(Paragraph("1. Column Geometry", styles['Heading2']))
+    story.append(Paragraph("1. General Column Properties", styles['Heading2']))
     geom_lines = [
         f"Section type: {model.section_type}",
         f"Column length, L = {model.L:.2f}",
-        f"Concrete cover = {model.cover:.2f}"
+        f"Clear cover = {model.cover:.2f}"
     ]
     if model.section_type == "circular":
         geom_lines.append(f"Diameter, D = {model.D:.2f}")
     else:
-        geom_lines.append(f"Width, B = {model.B:.2f}")
-        geom_lines.append(f"Depth, H = {model.H:.2f}")
+        geom_lines.append(f"Width, B = {model.B:.2f} (normal to lateral load)")
+        geom_lines.append(f"Depth, H = {model.H:.2f} (along lateral load)")
+    geom_lines.append(f"Axial Load, P = {model.P_axial}")
     for line in geom_lines:
         story.append(Paragraph(line, styles['Normal']))
-    story.append(Spacer(1, 12))
+    story.append(Spacer(1, 5))
 
     # Derived properties
     story.append(Paragraph("2. Derived Section Properties", styles['Heading2']))
@@ -205,19 +206,18 @@ def md_to_pdf_reportlab(model, pdf_file="RC_Column_Report.pdf"):
         derived_lines.append(f"Effective stiffness modifier, k_eff = {model.k_eff:.4f}")
     for line in derived_lines:
         story.append(Paragraph(line, styles['Normal']))
-    story.append(Spacer(1, 12))
+    story.append(Spacer(1, 5))
 
     # Materials
     story.append(Paragraph("3. Material Properties", styles['Heading2']))
     mat_lines = [
-        f"Concrete f'c = {model.fc:.2f}",
-        f"Concrete Ec = {model.Ec:.2f}",
-        f"Steel fy = {model.fy:.2f}, fu = {model.fu:.2f}, Es = {model.Es:.2f}",
-        f"Strain hardening modulus Esh = {model.Esh:.2f}"
+        f"Concrete: f'c = {model.fc},  Ec = {model.Ec:.2f}",
+        f"Longitudinal steel bar: fy = {model.fy}, fu = {model.fu}, Es = {model.Es}, Esh = {model.Esh}, ε_sh = {model.e_sh},  ε_ult = {model.e_ult}",
+        f"Transverse steel bar: dh = {model.dh}, sh = {model.sh}, fyh = {model.fyh}, fuh = {model.fuh}, ε_sm = {model.esm}"
     ]
     for line in mat_lines:
         story.append(Paragraph(line, styles['Normal']))
-    story.append(Spacer(1, 12))
+    story.append(Spacer(1, 5))
 
     # Reinforcement
     story.append(Paragraph("4. Reinforcement Details", styles['Heading2']))
@@ -228,19 +228,19 @@ def md_to_pdf_reportlab(model, pdf_file="RC_Column_Report.pdf"):
         story.append(Paragraph(f"Bottom bars = {model.nBarsBot} (dia {model.dbBot})", styles['Normal']))
         if model.nBarsInt > 0:
             story.append(Paragraph(f"Interior bars = {model.nBarsInt} (dia {model.dbInt})", styles['Normal']))
-    story.append(Spacer(1, 12))
+    story.append(Spacer(1, 5))
 
     # ------------------- Fiber Section -------------------
-    story.append(Paragraph("Reinforced Concrete Fiber Section", styles['Heading2']))
+    story.append(Paragraph("Reinforced Concrete Fiber Section", styles['Heading3']))
     plots_dir = os.path.join(os.path.dirname(pdf_file), "plots")
     os.makedirs(plots_dir, exist_ok=True)
     # Correct: Save directly inside the plot_fib_section method
     fiber_plot_path = os.path.join(plots_dir, "fiber_section.png")
     model.plot_fib_section(save_path=fiber_plot_path)  # this saves the figure correctly
-    story.append(Image(fiber_plot_path, width=400, height=250))
-    story.append(Spacer(1, 12))
+    story.append(Image(fiber_plot_path, width=300, height=220))
+    story.append(Spacer(1, 5))
 
-
+    story.append(PageBreak())
     # M-Phi
     if hasattr(model, "df_m_phi"):
         story.append(Paragraph("5. Moment-Curvature Analysis", styles['Heading2']))
@@ -255,6 +255,7 @@ def md_to_pdf_reportlab(model, pdf_file="RC_Column_Report.pdf"):
             ('ALIGN', (0,0), (-1,-1), 'RIGHT')
         ]))
         story.append(tbl)
+        story.append(Spacer(1, 6))
         story.append(Paragraph(f"Mode of failure: {model.failure_mode_mPhi}"))
         story.append(Spacer(1, 6))
 
@@ -273,7 +274,8 @@ def md_to_pdf_reportlab(model, pdf_file="RC_Column_Report.pdf"):
             disp_yi, disp_u = get_disp_mPhi(model)
             story.append(Paragraph("Displacement based on idealized moment-curvature", styles['Heading4']))
             story.append(Paragraph(f"Idealized yield disp = {disp_yi:.3f} in & Ultimate disp = {disp_u:.3f} in"))
-            story.append(Spacer(1, 12))
+            story.append(Spacer(1, 5))
+
 
     # -------------------- M-Phi Plot --------------------
     if hasattr(model, "df_m_phi") and not model.df_m_phi.empty:
@@ -304,7 +306,7 @@ def md_to_pdf_reportlab(model, pdf_file="RC_Column_Report.pdf"):
         plt.close()
 
         story.append(Image(mp_phi_plot_path, width=400, height=250))
-        story.append(Spacer(1, 12))
+        story.append(Spacer(1, 5))
 
     # Pushover
     if hasattr(model, "df_pushover"):
@@ -320,6 +322,7 @@ def md_to_pdf_reportlab(model, pdf_file="RC_Column_Report.pdf"):
             ('ALIGN', (0,0), (-1,-1), 'RIGHT')
         ]))
         story.append(tbl)
+        story.append(Spacer(1, 6))
         story.append(Paragraph(f"Mode of failure: {model.failure_mode_pushover}"))
         story.append(Spacer(1, 6))
 
@@ -335,7 +338,7 @@ def md_to_pdf_reportlab(model, pdf_file="RC_Column_Report.pdf"):
                 ('ALIGN', (0,0), (-1,-1), 'RIGHT')
             ]))
             story.append(tbl)
-            story.append(Spacer(1, 12))
+            story.append(Spacer(1, 5))
 
     # -------------------- Pushover Plot --------------------
     if hasattr(model, "df_pushover") and not model.df_pushover.empty:
@@ -364,7 +367,6 @@ def md_to_pdf_reportlab(model, pdf_file="RC_Column_Report.pdf"):
         plt.close()
 
         story.append(Image(pushover_plot_path, width=400, height=250))
-        story.append(Spacer(1, 12))
 
     doc.build(story)
     return pdf_file
