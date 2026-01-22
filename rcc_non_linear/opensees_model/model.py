@@ -1,6 +1,6 @@
 import math
 import os
-from rcc_non_linear.concrete_models.mander_model import RectConcreteMander, CircConcreteMander, SteelMander
+from rcc_non_linear.concrete_models.mander_model import RectConcreteMander, CircConcreteMander, SteelMander, rect_ke
 from rcc_non_linear.opensees_model.rect_section import RectSection
 from rcc_non_linear.opensees_model.circ_section import CircSection
 from rcc_non_linear.utils.helper import caltrans_bilinear 
@@ -91,6 +91,7 @@ class Model:
             self.divB = props.get("divB", 30)
             self.divD = props.get("divD", 30)
             self.divCover = props.get("divCover", 5)
+            self.ke = props.get("ke", None)     # confinement effectiveness coefficient
           
         else:
             raise ValueError("Either B and H (rectangular) or D (circular) must be provided.")
@@ -146,12 +147,13 @@ class Model:
                 fyh=self.fyh, esm=self.esm
             )   
         else:
+            self.ke = self.ke if self.ke is not None else rect_ke(self) 
             material = RectConcreteMander(
                 fc_prime=self.fc,
                 B=self.B, H=self.H, cover=self.cover,
                 dh=self.dh, sh=self.sh,
-                fyh=self.fyh, esm=self.esm,
-                nx=self.nx, ny=self.ny
+                fyh=self.fyh, esm=self.esm, 
+                nx=self.nx, ny=self.ny, ke=self.ke
             )
             self.k_confinement = material.k
         self.confined_props = material.confined_props()

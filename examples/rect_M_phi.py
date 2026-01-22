@@ -17,6 +17,7 @@ model = Model(col_props)
 
 print(model.confined_props)
 print(model.unconfined_props)
+print(model.ke)
 
 #To plot the fiber section, use any of the following methods:
 # model.plot_fib_section()

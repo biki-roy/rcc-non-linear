@@ -14,9 +14,23 @@ def load_mander_k():
     data_path = files("rcc_non_linear.concrete_models.data") / "rect_conf_k.csv"
     return pd.read_csv(data_path, header=None)
 
+def rect_ke(col):
+    """Calculate confinement effectiveness coefficient ke for rectangular columns."""
+
+    bc = col.B - 2 * col.cover - col.dh
+    hc = col.H - 2 * col.cover - col.dh
+    s_prime = col.sh - col.dh
+    rho = col.As / col.Ag
+    w_prime_top = (bc-col.dh-col.dbTop)/(col.nBarsTop-1) - col.dh
+    w_prime_left = (hc-col.dh-col.dbTop)/(col.nBarsInt+1) - col.dh
+    p1 = (1-2*(col.nBarsTop-1)*w_prime_top**2/(6*bc*hc)-2*(col.nBarsInt+1)*w_prime_left**2/(6*bc*hc))
+    p2 = 1-s_prime/(2*bc)
+    p3 = 1-s_prime/(2*hc)
+    ke = p1*p2*p3 / (1-rho)
+    return ke
 
 class RectConcreteMander:
-    def __init__(self, fc_prime, B, H, cover, dh, sh, fyh, esm, nx=2, ny=2):
+    def __init__(self, fc_prime, B, H, cover, dh, sh, fyh, esm,  nx=2, ny=2, ke=None):
         Avx = nx * math.pi * dh**2 / 4
         Avy = ny * math.pi * dh**2 / 4
         w_corex = B - 2 * cover - dh
@@ -24,8 +38,9 @@ class RectConcreteMander:
         rho_x = Avx / (w_corey * sh)
         rho_y = Avy / (w_corex * sh)
 
-        f_lx = 0.75 * rho_x * fyh / fc_prime
-        f_ly = 0.75 * rho_y * fyh / fc_prime
+        ke = ke if ke is not None else 0.75
+        f_lx = ke * rho_x * fyh / fc_prime
+        f_ly = ke * rho_y * fyh / fc_prime
 
         k = interpolate_z(load_mander_k(), min(f_lx, f_ly), max(f_lx, f_ly))
         self.fc_prime = fc_prime
