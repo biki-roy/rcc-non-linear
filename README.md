@@ -56,6 +56,14 @@ Install the package:
 ```bash
 pip install git+https://github.com/learnstructure/rcc-non-linear.git
 ```
+
+### Option 3: Running on Google Colab
+```bash
+pip install openseespy
+pip install opsvis
+pip install git+https://github.com/learnstructure/rcc-non-linear.git
+```
+
 ### Dependencies
 
 - Python ≥ 3.8
@@ -63,8 +71,10 @@ pip install git+https://github.com/learnstructure/rcc-non-linear.git
 - scipy
 - matplotlib
 - pandas
+- plotly
 - openseespy (optional, for OpenSees integration)
 - opsvis (optional, for OpenSees visualization)
+- reportlab
 
 ## Project Structure
 ```
@@ -123,7 +133,7 @@ print(f"Confined strength: {rect_concrete.fcc_prime} ksi")
 print(f"Strain at peak: {rect_concrete.ecc}")
 ```
 
-### Example 2: Complete Column Model with OpenSees
+### Example 2: Rectangular Column Model with OpenSees
 
 ```python
 from rcc_non_linear import Model
@@ -154,22 +164,22 @@ model.pushover(n_steps=100, d_roof=50, direction='x')
 model.create_report()
 ```
 
-### Example 3: Moment-Curvature Analysis
+### Example 3: Circular Column Model with OpenSees
 
 ```python
-from rcc_non_linear.opensees_model.m_phi import analyze_m_phi
-
-props = {
-    'fc': 5.0,
-    'B': 27.5, 'H': 13.75,
-    'nBarsTop': 6, 'dbTop': 1.0,
-    'nBarsBot': 6, 'dbBot': 1.0,
-    'fy': 70, 'fu': 120,
-    'P': 500,
+from rcc_non_linear import Model
+from rcc_non_linear.utils.helper import plot_response, plot_response_multi
+col_props = {
+    'fc': 6.1,
+    'D': 48, 'L': 324, 'cover': 2,
+    'nBars': 18, 'db': 1.41,
+    'fy': 75.2, 'fu': 102.4, 'Es': 29000, 'Esh': 1247, 'e_sh': 0.005, 'e_ult': 0.122,
+    'dh':0.888, 'sh':6, 'fyh':54.8, 'esm':0.125,
+    'P_axial': 570, 'rupture_limit': 0.15
 }
+model = Model(col_props)
 
-# Perform M-φ analysis
-moment_curvature_data = analyze_m_phi(props, direction='x')
+results_df, bilinear_df, yield_step = model.run_pushover_analysis()
 ```
 
 ## Key Classes
@@ -229,4 +239,4 @@ See [LICENSE](LICENSE) file for details.
 ## Contact
 
 **Author**: Abinash Mandal  
-**Affiliation**: University of Nevada, Reno - PhD Research
+**Affiliation**: University of Nevada, Reno - PhD in Structural Engineering
