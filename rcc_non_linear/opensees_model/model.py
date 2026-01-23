@@ -226,11 +226,11 @@ class Model:
         Create Markdown and PDF report.
         """
         # Markdown
-        md_path = create_markdown_report(self, filename=filename+".md", out_dir=out_dir)
+        # md_path = create_markdown_report(self, filename=filename+".md", out_dir=out_dir)
         
         if generate_pdf:
             pdf_path = md_to_pdf_reportlab(self, pdf_file=os.path.join(out_dir or "results", filename+".pdf"))
             return pdf_path
 
-        return md_path
+        # return md_path
 

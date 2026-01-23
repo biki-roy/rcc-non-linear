@@ -2,7 +2,7 @@ from rcc_non_linear.opensees_model.gravity import run_gravity_analysis
 from rcc_non_linear.opensees_model.circ_section import circular_column_bar_fibers
 import pandas as pd
 import numpy as np
-
+import os 
 def pushover_analysis(model, maxU, dU, self_wt):
     import openseespy.opensees as ops
     ops.node(1, 0.0, 0.0)
@@ -49,6 +49,14 @@ def pushover_analysis(model, maxU, dU, self_wt):
         rupture_limit = max(1, int(np.floor(model.rupture_limit * model.nBars)))
         model.bar_fibers = bar_fibers
         model.ruptured_bars = ruptured_bars
+        fiber_results = {}
+        for _, row in bar_fibers.iterrows():
+            bar_id = int(row['bar_id'])
+            fiber_results[bar_id] = {
+                "step": [],
+                "eps_bar": [],
+                "sig_bar": []
+            }
 
     while curr_disp < maxU:
         ok = ops.analyze(1)
@@ -80,6 +88,10 @@ def pushover_analysis(model, maxU, dU, self_wt):
                     'fiber', y, z, model.bar_tag,
                     'stressStrain'
                 )
+                fiber_results[bar_id]["step"].append(step)
+                fiber_results[bar_id]["eps_bar"].append(eps_bar)
+                fiber_results[bar_id]["sig_bar"].append(sig_bar)
+
                 if eps_bar > model.e_ult: ruptured_bars.add(int(bar_id))
 
         else:
@@ -118,6 +130,24 @@ def pushover_analysis(model, maxU, dU, self_wt):
             model.ruptured_bars = ruptured_bars
             break
     
+    if model.section_type == "circular":
+        rows = []
+
+        for bar_id, data in fiber_results.items():
+            for i in range(len(data["step"])):
+                rows.append({
+                    "bar_id": bar_id,
+                    "step": data["step"][i],
+                    "eps_bar": data["eps_bar"][i],
+                    "sig_bar": data["sig_bar"][i],
+                })
+
+        df_all = pd.DataFrame(rows)
+        results_dir = "results"
+        os.makedirs(results_dir, exist_ok=True)
+        output_path = os.path.join("results", "fiber_stress_strain_all.csv")
+        df_all.to_csv(output_path, index=False)
+
     results_df = pd.DataFrame(results)
     return results_df, yield_step
 

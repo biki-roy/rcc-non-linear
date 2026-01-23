@@ -241,6 +241,44 @@ def md_to_pdf_reportlab(model, pdf_file="RC_Column_Report.pdf"):
     story.append(Spacer(1, 5))
 
     story.append(PageBreak())
+
+    from rcc_non_linear.utils.helper import plot_response
+    # -------------------- Material model --------------------
+    if hasattr(model, "df_pushover") and not model.df_pushover.empty:
+        story.append(Paragraph("Materials model", styles['Heading3']))
+
+        plt.figure(figsize=(6,4))
+        # Original pushover curve
+        plt.plot(model.df_pushover['Eps_Steel'], model.df_pushover['Sig_Steel'], 'b', label='Reinforcing Steel Model')
+
+        plt.xlabel("Strain")
+        plt.ylabel("Stress")
+        plt.title("Reinforcing Steel Model")
+        plt.grid(True)
+        plt.legend()
+
+        steel_plot_path = os.path.join(plots_dir, "steel_model.png")
+        plt.savefig(steel_plot_path, bbox_inches='tight')
+        plt.close()
+
+        story.append(Image(steel_plot_path, width=400, height=250))
+
+        plt.figure(figsize=(6,4))
+        # Original pushover curve
+        plt.plot(model.df_pushover['Eps_Conc'], model.df_pushover['Sig_Conc'], 'b', label='Concrete Model')
+
+        plt.xlabel("Strain")
+        plt.ylabel("Stress")
+        plt.title("Concrete Model")
+        plt.grid(True)
+        plt.legend()
+
+        concrete_plot_path = os.path.join(plots_dir, "concrete_model.png")
+        plt.savefig(concrete_plot_path, bbox_inches='tight')
+        plt.close()
+
+        story.append(Image(concrete_plot_path, width=400, height=250))
+
     # M-Phi
     if hasattr(model, "df_m_phi"):
         story.append(Paragraph("5. Moment-Curvature Analysis", styles['Heading2']))
@@ -276,7 +314,7 @@ def md_to_pdf_reportlab(model, pdf_file="RC_Column_Report.pdf"):
             story.append(Paragraph(f"Idealized yield disp = {disp_yi:.3f} in & Ultimate disp = {disp_u:.3f} in"))
             story.append(Spacer(1, 5))
 
-
+    story.append(PageBreak())
     # -------------------- M-Phi Plot --------------------
     if hasattr(model, "df_m_phi") and not model.df_m_phi.empty:
         story.append(Paragraph("Moment-Curvature Curve", styles['Heading3']))
