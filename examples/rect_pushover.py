@@ -10,7 +10,7 @@ col_props = {
     'fy': 68, 'fu': 95, 'Es': 29000, 'e_sh': 0.0115, 'e_ult': 0.12,
     'dh':0.375, 'sh':3, 'fyh':68, 'esm':0.12,
     'nx': 2, 'ny':2,
-    'P_axial': 0
+    'P_axial': 0, 'core_failure_percentage': 0.1,
 }
 
 model = Model(col_props)

@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import math
+import pandas as pd
 
 class RectSection:    
     def __init__(self, B, H, cover, Ec, 
@@ -83,3 +84,34 @@ class RectSection:
         plt.title("Rectangular Column Fiber Section")
         plt.axis('equal')
         # plt.show()
+
+
+def rect_col_core_fibers(B, D, divB, divD):
+    dz = B / divB
+    dy = D / divD
+
+    core_area = B * D
+
+    data = []
+    fiber_id = 1
+
+    for i in range(1, divD + 1):      # depth direction (y)
+        y_centroid = -D/2 + (i - 0.5) * dy
+
+        # # 👉 keep only upper half
+        # if y_centroid < 0.0:
+        #     continue
+
+        for j in range(1, divB + 1):  # width direction (z)
+            z_centroid = -B/2 + (j - 0.5) * dz
+
+            fiber_area = dz * dy
+            area_ratio = fiber_area / core_area
+
+            data.append([fiber_id, y_centroid, z_centroid, area_ratio])
+            fiber_id += 1
+
+    return pd.DataFrame(
+        data,
+        columns=["fiber_id", "y", "z", "area_ratio"]
+    )

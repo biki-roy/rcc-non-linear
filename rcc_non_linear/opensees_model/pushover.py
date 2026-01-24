@@ -1,5 +1,7 @@
+from rcc_non_linear.opensees_model import model
 from rcc_non_linear.opensees_model.gravity import run_gravity_analysis
-from rcc_non_linear.opensees_model.circ_section import circular_column_bar_fibers
+from rcc_non_linear.opensees_model.circ_section import circular_column_bar_fibers, circular_column_core_fibers
+from rcc_non_linear.opensees_model.rect_section import rect_col_core_fibers
 import pandas as pd
 import numpy as np
 import os 
@@ -57,6 +59,15 @@ def pushover_analysis(model, maxU, dU, self_wt):
                 "eps_bar": [],
                 "sig_bar": []
             }
+        model.core_fibers = circular_column_core_fibers(model.core_h, model.nAng, model.nRad)
+
+    if model.section_type == "rectangular":
+        core_b, core_h = model.B - model.cover - model.dh/2, model.H - model.cover - model.dh/2
+        model.core_fibers = rect_col_core_fibers(core_b, core_h, model.divB, model.divD)
+
+    crushed_core_limit = model.core_failure_percentage
+    model.crushed_cores = set()
+    cum_crushed_cores_area = 0
 
     while curr_disp < maxU:
         ok = ops.analyze(1)
@@ -71,15 +82,28 @@ def pushover_analysis(model, maxU, dU, self_wt):
             curr_disp = -ops.nodeDisp(2, 1)
         # print(curr_disp, curr_force)
         if curr_force > peak_force: peak_force = curr_force
-        
+      
+        if "core" in model.failure_criteria and model.core_failure_percentage is not None:
+            for _, row in model.core_fibers.iterrows():
+                y, z = row['y'], row['z']
+                fiber_id = row['fiber_id']
+                sig_fiber, eps_fiber = ops.eleResponse(
+                    1,
+                    'section', model.fib_sec_tag,
+                    'fiber', y, z, model.core_tag,
+                    'stressStrain'
+                )
+                if eps_fiber < model.confined_props[-1]:
+                    model.crushed_cores.add(int(fiber_id))
+                    cum_crushed_cores_area += row['area_ratio']
+
         # --- Fiber Responses ---
         if model.section_type == "circular":
             sig_c, eps_c = ops.eleResponse(1, 'section', model.fib_sec_tag, 'fiber', -model.core_h, 0.0, model.core_tag, 'stressStrain')
             
             sig_s, eps_s  = ops.eleResponse(1, 'section', model.fib_sec_tag, 'fiber', model.bar_h, 0.0, model.bar_tag, 'stressStrain')  #outermost fiber only
 
-
-            for _, row in bar_fibers.iterrows():
+            for _, row in bar_fibers.iterrows():                
                 y, z = row['y'], row['z']
                 bar_id = row['bar_id']
                 sig_bar, eps_bar = ops.eleResponse(
@@ -116,9 +140,14 @@ def pushover_analysis(model, maxU, dU, self_wt):
             print(f"⚠️ Strength drop at displacement = {curr_disp:.6f}")
             model.failure_mode_pushover = "strength"
             break
-        if "core" in model.failure_criteria and eps_c < model.confined_props[-1]:
+        if "core" in model.failure_criteria and crushed_core_limit is None and eps_c < model.confined_props[-1]:
             print(f"⚠️ Concrete crushed at displacement = {curr_disp:.6f}")
             model.failure_mode_pushover = "core"
+            break
+        if crushed_core_limit and "core" in model.failure_criteria and cum_crushed_cores_area >= crushed_core_limit:
+            print(f"⚠️ Concrete crushed at displacement = {curr_disp:.6f}")
+            model.failure_mode_pushover = "core"
+            print("cumulative crushed core area ratio:", cum_crushed_cores_area)
             break
         if "rebar" in model.failure_criteria and eps_s > model.e_ult and model.section_type == "rectangular":
             print(f"⚠️ Steel ruptured at displacement = {curr_disp:.6f}")

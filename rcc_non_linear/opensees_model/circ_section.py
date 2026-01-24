@@ -68,6 +68,52 @@ def circular_column_bar_fibers(r_bar, nBars):
         'y': y,
         'z': z
     })
+    # data = []
+    # bar_id = 1
+
+    # for yi, zi in zip(y, z):
+    #     # keep only upper half bars (including neutral axis)
+    #     if yi >= 0.0:
+    #         data.append([bar_id, yi, zi])
+    #         bar_id += 1
+
+    # return pd.DataFrame(
+    #     data,
+    #     columns=["bar_id", "y", "z"]
+    # )
+
+def circular_column_core_fibers(r_core, nAng, nRad):
+    dr = r_core / nRad
+    dtheta = 2.0 * np.pi / nAng
+    core_area = np.pi * r_core**2
+
+    fiber_id = 1
+    data = []
+
+    for i in range(1, nRad + 1):  # radial rings (inside → outside)
+        r_inner = (i - 1) * dr
+        r_outer = i * dr
+        
+        # exact area of one fiber
+        fiber_area = 0.5 * (r_outer**2 - r_inner**2) * dtheta
+        
+        # centroid radius (mid-radius version, as in your code)
+        r_centroid = (i - 0.5) * dr
+        
+        for j in range(1, nAng + 1):  # angular sectors
+            theta = (j - 0.5) * dtheta
+            
+            y = r_centroid * np.sin(theta)
+            z = r_centroid * np.cos(theta)
+            
+            area_ratio = fiber_area / core_area
+            data.append([fiber_id, y, z, area_ratio])
+            fiber_id += 1
+
+    return pd.DataFrame(
+        data,
+        columns=["fiber_id", "y", "z", "area_ratio"]
+    )
 
 
 
