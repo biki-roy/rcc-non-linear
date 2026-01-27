@@ -29,7 +29,7 @@ def pushover_analysis(model, maxU, dU, self_wt):
     ops.pattern('Plain', 2, 2)
     ops.load(2, 1.0, 0.0, 0.0)
     if model.section_type == "circular":
-        ops.integrator('DisplacementControl', 2, 1, dU)
+        ops.integrator('DisplacementControl', 2, 1, -dU)
     else:
         ops.integrator('DisplacementControl', 2, 1, -dU)
 
@@ -75,8 +75,8 @@ def pushover_analysis(model, maxU, dU, self_wt):
         step += 1
         ops.reactions()
         if model.section_type == "circular": 
-            curr_force = -ops.nodeReaction(1, 1)
-            curr_disp = ops.nodeDisp(2, 1)
+            curr_force = ops.nodeReaction(1, 1)
+            curr_disp = -ops.nodeDisp(2, 1)
         else:
             curr_force = ops.nodeReaction(1, 1)
             curr_disp = -ops.nodeDisp(2, 1)
@@ -99,9 +99,9 @@ def pushover_analysis(model, maxU, dU, self_wt):
 
         # --- Fiber Responses ---
         if model.section_type == "circular":
-            sig_c, eps_c = ops.eleResponse(1, 'section', model.fib_sec_tag, 'fiber', -model.core_h, 0.0, model.core_tag, 'stressStrain')
+            sig_c, eps_c = ops.eleResponse(1, 'section', model.fib_sec_tag, 'fiber', model.core_h, 0.0, model.core_tag, 'stressStrain')
             
-            sig_s, eps_s  = ops.eleResponse(1, 'section', model.fib_sec_tag, 'fiber', model.bar_h, 0.0, model.bar_tag, 'stressStrain')  #outermost fiber only
+            sig_s, eps_s  = ops.eleResponse(1, 'section', model.fib_sec_tag, 'fiber', -model.bar_h, 0.0, model.bar_tag, 'stressStrain')  #outermost fiber only
 
             for _, row in bar_fibers.iterrows():                
                 y, z = row['y'], row['z']
