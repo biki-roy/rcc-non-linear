@@ -113,7 +113,7 @@ class Model:
         self.core_tag, self.cover_tag, self.bar_tag = 1, 2, 3  # material tags
         self.fib_sec_tag, self.elastic_sec_tag = 1, 2
         self.failure_criteria = props.get("failure_criteria" , ["core","rebar","strength" ])
-        self.core_failure_percentage = props.get("core_failure_percentage", None) 
+        self.core_crush_limit = props.get("core_crush_limit", None) 
         # Derived
         self.Ec = 57 * math.sqrt(self.fc * 1000)
 

@@ -64,9 +64,7 @@ def pushover_analysis(model, maxU, dU, self_wt):
         core_b, core_h = model.B - model.cover - model.dh/2, model.H - model.cover - model.dh/2
         model.core_fibers = rect_col_core_fibers(core_b, core_h, model.divB, model.divD)
 
-    crushed_core_limit = model.core_failure_percentage
     model.crushed_cores = set()
-    cum_crushed_cores_area = 0
 
     while curr_disp < maxU:
         ok = ops.analyze(1)
@@ -79,8 +77,8 @@ def pushover_analysis(model, maxU, dU, self_wt):
 
         # print(curr_disp, curr_force)
         if curr_force > peak_force: peak_force = curr_force
-      
-        if "core" in model.failure_criteria and model.core_failure_percentage is not None:
+        cum_crushed_cores_area = 0
+        if "core" in model.failure_criteria and model.core_crush_limit is not None:
             for _, row in model.core_fibers.iterrows():
                 y, z = row['y'], row['z']
                 fiber_id = row['fiber_id']
@@ -133,11 +131,11 @@ def pushover_analysis(model, maxU, dU, self_wt):
             print(f"⚠️ Strength drop at displacement = {curr_disp:.6f}")
             model.failure_mode_pushover = "strength"
             break
-        if "core" in model.failure_criteria and crushed_core_limit is None and eps_c < model.confined_props[-1]:
+        if "core" in model.failure_criteria and model.core_crush_limit is None and eps_c < model.confined_props[-1]:
             print(f"⚠️ Concrete crushed at displacement = {curr_disp:.6f}")
             model.failure_mode_pushover = "core"
             break
-        if crushed_core_limit and "core" in model.failure_criteria and cum_crushed_cores_area >= crushed_core_limit:
+        if model.core_crush_limit and "core" in model.failure_criteria and cum_crushed_cores_area >= model.core_crush_limit:
             print(f"⚠️ Concrete crushed at displacement = {curr_disp:.6f}")
             model.failure_mode_pushover = "core"
             print("cumulative crushed core area ratio:", cum_crushed_cores_area)
