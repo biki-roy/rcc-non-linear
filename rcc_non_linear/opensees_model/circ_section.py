@@ -31,7 +31,7 @@ class CircSection:
             ['section', 'Fiber', self.sec_tag, '-GJ', GJ],
             ['patch', 'circ', self.core_tag, self.nAng, self.nRad, 0.0, 0.0, 0.0, self.R_core, 0.0, 360.0],
             ['patch', 'circ', self.cover_tag, self.nAng, self.nRad_cover, 0.0, 0.0, self.R_core, self.D/2, 0.0, 360.0],
-            ['layer', 'circ', self.bar_tag, self.nBars, self.Ab, 0.0, 0.0, self.R_bar, 0.0, 360.0]
+            ['layer', 'circ', self.bar_tag, self.nBars, self.Ab, 0.0, 0.0, self.R_bar, 180, -180.0+360.0/self.nBars]
         ]
         opsv.fib_sec_list_to_cmds(self.fib_sec)
 

@@ -1,3 +1,4 @@
+from xml.etree.ElementPath import ops
 from rcc_non_linear.opensees_model import model
 from rcc_non_linear.opensees_model.gravity import run_gravity_analysis
 from rcc_non_linear.opensees_model.circ_section import circular_column_bar_fibers, circular_column_core_fibers
@@ -28,10 +29,8 @@ def pushover_analysis(model, maxU, dU, self_wt):
     ops.timeSeries('Linear', 2)
     ops.pattern('Plain', 2, 2)
     ops.load(2, 1.0, 0.0, 0.0)
-    if model.section_type == "circular":
-        ops.integrator('DisplacementControl', 2, 1, -dU)
-    else:
-        ops.integrator('DisplacementControl', 2, 1, -dU)
+
+    ops.integrator('DisplacementControl', 2, 1, -dU)
 
     results = {
         'displacements': [0.0], 'forces': [0.0],
@@ -74,12 +73,10 @@ def pushover_analysis(model, maxU, dU, self_wt):
         if ok != 0: break
         step += 1
         ops.reactions()
-        if model.section_type == "circular": 
-            curr_force = ops.nodeReaction(1, 1)
-            curr_disp = -ops.nodeDisp(2, 1)
-        else:
-            curr_force = ops.nodeReaction(1, 1)
-            curr_disp = -ops.nodeDisp(2, 1)
+
+        curr_force = ops.nodeReaction(1, 1)
+        curr_disp = -ops.nodeDisp(2, 1)
+
         # print(curr_disp, curr_force)
         if curr_force > peak_force: peak_force = curr_force
       
@@ -98,11 +95,11 @@ def pushover_analysis(model, maxU, dU, self_wt):
                     cum_crushed_cores_area += row['area_ratio']
 
         # --- Fiber Responses ---
-        if model.section_type == "circular":
-            sig_c, eps_c = ops.eleResponse(1, 'section', model.fib_sec_tag, 'fiber', model.core_h, 0.0, model.core_tag, 'stressStrain')
-            
-            sig_s, eps_s  = ops.eleResponse(1, 'section', model.fib_sec_tag, 'fiber', -model.bar_h, 0.0, model.bar_tag, 'stressStrain')  #outermost fiber only
+        sig_c, eps_c = ops.eleResponse(1, 'section', model.fib_sec_tag, 'fiber', model.core_h, 0.0, model.core_tag, 'stressStrain')
+        
+        sig_s, eps_s  = ops.eleResponse(1, 'section', model.fib_sec_tag, 'fiber', -model.bar_h, 0.0, model.bar_tag, 'stressStrain')  #outermost fiber only
 
+        if model.section_type == "circular":
             for _, row in bar_fibers.iterrows():                
                 y, z = row['y'], row['z']
                 bar_id = row['bar_id']
@@ -117,10 +114,6 @@ def pushover_analysis(model, maxU, dU, self_wt):
                 fiber_results[bar_id]["sig_bar"].append(sig_bar)
 
                 if eps_bar > model.e_ult: ruptured_bars.add(int(bar_id))
-
-        else:
-            sig_c, eps_c = ops.eleResponse(1, 'section', model.fib_sec_tag, 'fiber', model.core_h, 0.0, model.core_tag, 'stressStrain')
-            sig_s, eps_s  = ops.eleResponse(1, 'section', model.fib_sec_tag, 'fiber', -model.bar_h, 0.0, model.bar_tag, 'stressStrain')
 
         if (yield_disp is None) and (eps_s >= model.fy / model.Es):
             yield_disp = curr_disp
