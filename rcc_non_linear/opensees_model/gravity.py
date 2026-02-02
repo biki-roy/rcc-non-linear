@@ -8,7 +8,7 @@ def run_gravity_analysis(P_axial, type = "MC"):
         ops.load(2, 0.0, -P_axial, 0.0)
     ops.integrator('LoadControl', 0.0)
     ops.system('SparseGeneral', '-piv')
-    ops.test('NormUnbalance', 1e-9, 10)
+    ops.test('NormUnbalance', 1e-8, 10)
     ops.numberer('Plain')
     ops.constraints('Plain')
     ops.algorithm('Newton')

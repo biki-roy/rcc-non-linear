@@ -106,7 +106,7 @@ class Model:
         self.dh = props["dh"]
         self.sh = props["sh"]
         self.fyh = props.get("fyh", 68)   # default transverse reinforcement yield strength
-        self.fuh = props.get("fuh", 95)   # default transverse reinforcement ultimate strength
+        self.fuh = props.get("fuh", self.fyh * 1.25)   # default transverse reinforcement ultimate strength
         self.esm = props.get("esm", 0.1)  # default transverse reinforcement ultimate strain
         self.P_axial = props.get("P_axial", 0.0)  # axial load
 
