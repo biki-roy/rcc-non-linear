@@ -5,6 +5,7 @@ from rcc_non_linear.opensees_model.rect_section import RectSection
 from rcc_non_linear.opensees_model.circ_section import CircSection
 from rcc_non_linear.utils.helper import caltrans_bilinear 
 from rcc_non_linear.utils.report import create_markdown_report, md_to_pdf_reportlab
+from rcc_non_linear.utils.plot_section import plot_fiber_section_damage
 
 class Model:
     def __init__(self, props: dict):
@@ -58,7 +59,7 @@ class Model:
             - P_axial : Applied axial load (default = 0.0)
 
             Discretization parameters:
-            - Circular: nAng (default = 30), nRad (default = 20), nRad_cover (default = 8)
+            - Circular: nAng (default = 30), nRad (default = 20), nRad_cover (default = 5)
             - Rectangular: div (default = 30), divD (default = 30), divCover (default = 5)
         """
         # Geometry & materials
@@ -77,7 +78,7 @@ class Model:
             self.db = props["db"]
             self.nAng = props.get("nAng", 30)
             self.nRad = props.get("nRad", 20)
-            self.nRad_cover= props.get("nRad_cover", 8)
+            self.nRad_cover= props.get("nRad_cover", 5)
             self.rupture_limit = props.get("rupture_limit", 0.1)
         elif self.section_type == "rectangular":
             self.nBarsTop = props["nBarsTop"]
@@ -234,3 +235,9 @@ class Model:
 
         # return md_path
 
+    def plot_fib_section_damage(self):
+        import matplotlib.pyplot as plt
+        fig, ax = plot_fiber_section_damage(self,
+            self.fib_section.fib_sec
+        )
+        plt.show()

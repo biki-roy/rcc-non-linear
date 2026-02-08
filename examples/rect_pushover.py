@@ -10,7 +10,8 @@ col_props = {
     'fy': 68, 'fu': 95, 'Es': 29000, 'e_sh': 0.0115, 'e_ult': 0.12,
     'dh':0.375, 'sh':3, 'fyh':68, 'esm':0.12,
     'nx': 2, 'ny':2,
-    'P_axial': 0, 'core_failure_percentage': 0.1,
+    'P_axial': 0, 'failure_criteria': ['core', 'strength'], "core_crush_limit": 0.01,
+    "divB": 15, "divD": 25
 }
 
 model = Model(col_props)
@@ -25,7 +26,8 @@ model = Model(col_props)
 
 # results_df, bilinear_df, yield_step = model.run_M_phi_analysis()
 results_df, bilinear_df, yield_step = model.run_pushover_analysis()
-
+print(model.crushed_cores)
+model.plot_fib_section_damage()
 # print(f"Yield occurred at step: {yield_step}")
 # print(bilinear_df)
 
@@ -37,5 +39,5 @@ results_df, bilinear_df, yield_step = model.run_pushover_analysis()
 # plot_response(results_df.iloc[:, 2: 4])
 # print("Effective K", model.k_eff)
 
-model.create_report()
+# model.create_report()
 # print("confinement factor is:", model.k_confinement)

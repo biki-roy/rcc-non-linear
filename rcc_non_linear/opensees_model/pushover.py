@@ -61,8 +61,9 @@ def pushover_analysis(model, maxU, dU, self_wt):
         model.core_fibers = circular_column_core_fibers(model.core_h, model.nAng, model.nRad)
 
     if model.section_type == "rectangular":
-        core_b, core_h = model.B - model.cover - model.dh/2, model.H - model.cover - model.dh/2
+        core_b, core_h = model.B - 2*model.cover - model.dh, model.H - 2*model.cover - model.dh
         model.core_fibers = rect_col_core_fibers(core_b, core_h, model.divB, model.divD)
+
 
     model.crushed_cores = set()
 
