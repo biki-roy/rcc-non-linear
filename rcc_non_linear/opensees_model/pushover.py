@@ -44,7 +44,7 @@ def pushover_analysis(model, maxU, dU, self_wt):
     step = 0
     yield_step = None
 
-    if model.section_type == "circular":
+    if model.section_type == "circular" and model.rupture_limit is not None:
         bar_fibers = circular_column_bar_fibers(model.bar_h, model.nBars)
         ruptured_bars = set()
         rupture_limit = max(1, int(np.floor(model.rupture_limit * model.nBars)))
@@ -98,7 +98,7 @@ def pushover_analysis(model, maxU, dU, self_wt):
         
         sig_s, eps_s  = ops.eleResponse(1, 'section', model.fib_sec_tag, 'fiber', -model.bar_h, 0.0, model.bar_tag, 'stressStrain')  #outermost fiber only
 
-        if model.section_type == "circular":
+        if model.section_type == "circular" and model.rupture_limit is not None:
             for _, row in bar_fibers.iterrows():                
                 y, z = row['y'], row['z']
                 bar_id = row['bar_id']
@@ -145,13 +145,17 @@ def pushover_analysis(model, maxU, dU, self_wt):
             print(f"⚠️ Steel ruptured at displacement = {curr_disp:.6f}")
             model.failure_mode_pushover = "rebar"
             break
-        if "rebar" in model.failure_criteria and model.section_type == "circular" and len(ruptured_bars) >= rupture_limit:
+        if "rebar" in model.failure_criteria and eps_s > model.e_ult and model.section_type == "circular" and model.rupture_limit is None:
+            print(f"⚠️ Steel ruptured at displacement = {curr_disp:.6f}")
+            model.failure_mode_pushover = "rebar"
+            break
+        if "rebar" in model.failure_criteria and model.section_type == "circular" and model.rupture_limit is not None and len(ruptured_bars) >= model.rupture_limit:
             print(f"⚠️  {len(ruptured_bars)} / {model.nBars} bars having IDs {ruptured_bars} ruptured at displacement = {curr_disp:.6f}")
             model.failure_mode_pushover = "rebar"
             model.ruptured_bars = ruptured_bars
             break
     
-    if model.section_type == "circular":
+    if model.section_type == "circular" and model.rupture_limit is not None:
         rows = []
 
         for bar_id, data in fiber_results.items():

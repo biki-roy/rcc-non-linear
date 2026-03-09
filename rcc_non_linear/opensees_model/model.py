@@ -79,7 +79,7 @@ class Model:
             self.nAng = props.get("nAng", 30)
             self.nRad = props.get("nRad", 20)
             self.nRad_cover= props.get("nRad_cover", 5)
-            self.rupture_limit = props.get("rupture_limit", 0.1)
+            self.rupture_limit = props.get("rupture_limit", None)
         elif self.section_type == "rectangular":
             self.nBarsTop = props["nBarsTop"]
             self.dbTop = props["dbTop"]

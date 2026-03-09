@@ -361,7 +361,8 @@ def md_to_pdf_reportlab(model, pdf_file="RC_Column_Report.pdf"):
         ]))
         story.append(tbl)
         story.append(Spacer(1, 6))
-        story.append(Paragraph(f"Mode of failure: {model.failure_mode_pushover}"))
+        mode = getattr(model, 'failure_mode_pushover', None)
+        story.append(Paragraph(f"Mode of failure: {mode if mode is not None else 'None'}"))
         story.append(Spacer(1, 6))
 
         if hasattr(model, "df_pushover_idealized"):
