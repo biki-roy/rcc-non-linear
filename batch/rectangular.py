@@ -5,7 +5,7 @@ from rcc_non_linear.utils.aashto import get_idealized_displacements
 from rcc_non_linear import Model
 import re
 
-workbook_name="circular_column.xlsx"
+workbook_name="rect_columns.xlsx"
 file_path = Path(get_excel_file_path(workbook_name=workbook_name))
 
 output_dir = file_path.parent / "results"
@@ -30,8 +30,8 @@ for i, row in columns_df.iterrows():
         print("⚠️ Skipping analysis as 'analysis_actual' is 0.")
         continue
     # Create model object
-    col_props = {'fc':row['fc'], 'D':row['D'], 'L':row['L'],
-                 'cover':row['cover'], 'nBars': int(row['nBars']), 'db': row['db'], 'fy': row['fy'], 'fu': row['fu'], 'e_sh': 0.005, 'e_ult': row['eps_ult'], 'dh':row['dh'], 'sh':row['sh'], 'fyh':row['fyh'], 'esm':row['esm'], 'P_axial': row['P_axial'], 'nAng': 30, 'nRad':20, 'nRad_cover': 8}
+    col_props = col_props = {'fc':row['fc'], 'B':row['B'], 'H':row['H'], 'L':row['L'], 'cover':row['cover'], 'nBarsTop': int(row['nBarsTop']), 'dbTop': row['dbTop'], 'nBarsBot': int(row['nBarsBot']), 'dbBot': row['dbBot'], 'nBarsInt': int(row['nBarsInt']), 'dbInt': row['dbInt'], 'fy': row['fy'], 'fu': row['fu'], 'e_sh': 0.005, 'e_ult': row['e_ult'], 'dh':row['dh'], 'sh':row['sh'], 'fyh':row['fyh'],'fuh':row['fuh'], 'esm':row['esm'], 'nx': row['nx'], 'ny': row['ny'], 'P_axial': row['P_axial'], 'divB': int(row['divB']), 'divD': int(row['divD']), 'divCover': int(row['divCover'])}
+
     col = Model(col_props)
     # Run analyses
     results_mPhi_df, bilinear_mPhi_df, yield_step_mPhi = col.run_M_phi_analysis()
@@ -56,7 +56,6 @@ for i, row in columns_df.iterrows():
     })
 
     col.create_report(f"{row['Counts']}_{row['Author']}_{safe_column_name}", output_dir)
-    if i==2: break  # Remove this line to run for all columns
 
 
 # Convert all summaries into a dataframe

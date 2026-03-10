@@ -195,7 +195,9 @@ class Model:
         else:
             plt.show()                # just display interactively
 
-    def run_M_phi_analysis(self, maxK=0.01, dK=0.00001):
+    def run_M_phi_analysis(self, maxK=0.02, dK=0.00002):     
+        if maxK is None: maxK = 50 * (self.fy / self.Es) / self.core_h
+        if dK is None: dK = maxK / 1000 
         from rcc_non_linear.opensees_model.m_phi import moment_curvature_analysis
         self.create_model()  
         results_df, yield_step = moment_curvature_analysis(self, maxK, dK)

@@ -294,7 +294,8 @@ def md_to_pdf_reportlab(model, pdf_file="RC_Column_Report.pdf"):
         ]))
         story.append(tbl)
         story.append(Spacer(1, 6))
-        story.append(Paragraph(f"Mode of failure: {model.failure_mode_mPhi}"))
+        mode_mPhi = getattr(model, 'failure_mode_mPhi', None)
+        story.append(Paragraph(f"Mode of failure: {mode_mPhi if mode_mPhi is not None else 'None'}"))
         story.append(Spacer(1, 6))
 
         if hasattr(model, "df_m_phi_idealized"):
