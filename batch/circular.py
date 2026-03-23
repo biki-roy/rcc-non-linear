@@ -8,7 +8,7 @@ import re
 workbook_name="circular_column.xlsx"
 file_path = Path(get_excel_file_path(workbook_name=workbook_name))
 
-output_dir = file_path.parent / "results"
+output_dir = file_path.parent / "results_actual"
 # Create folder if it does not exist
 output_dir.mkdir(exist_ok=True)
 # print(output_dir)
@@ -23,10 +23,11 @@ results_push_mPhi = []
 for i, row in columns_df.iterrows():
     safe_column_name = re.sub(r'[/():<>"|?*\\]', '_', row['Column'])
     print(f"\n=== Running pushover for column {i+1}/{len(columns_df)} ({safe_column_name})===")
-    
+
     if row['analysis_actual'] == 0:
         results_push.append({'d0': None, 'V0': None, 'dy': None, 'Vy': None, 'du': None, 'Vp': None, 'failure_mode': None})
         results_mPhi.append({'phi0': None, 'M0': None, 'phi_y': None, 'M_y': None, 'phi_u': None, 'M_u': None, 'failure_mode': None})
+        results_push_mPhi.append({'d0_': None, 'V0_': None, 'dy_': None, 'Vy_': None, 'du_': None, 'Vp_': None, 'failure_mode': None})
         print("⚠️ Skipping analysis as 'analysis_actual' is 0.")
         continue
     # Create model object
@@ -56,8 +57,6 @@ for i, row in columns_df.iterrows():
     })
 
     col.create_report(f"{row['Counts']}_{row['Author']}_{safe_column_name}", output_dir)
-    if i==2: break  # Remove this line to run for all columns
-
 
 # Convert all summaries into a dataframe
 results_push_df = pd.DataFrame(results_push)

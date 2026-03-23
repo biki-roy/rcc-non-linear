@@ -5,7 +5,7 @@ from rcc_non_linear.utils.aashto import get_idealized_displacements
 from rcc_non_linear import Model
 import re
 
-workbook_name="rectangular_column.xlsx"
+workbook_name="circular_column.xlsx"
 file_path = Path(get_excel_file_path(workbook_name=workbook_name))
 
 output_dir = file_path.parent / "results_actual"
@@ -24,6 +24,9 @@ for i, row in columns_df.iterrows():
     safe_column_name = re.sub(r'[/():<>"|?*\\]', '_', row['Column'])
     print(f"\n=== Running pushover for column {i+1}/{len(columns_df)} ({safe_column_name})===")
 
+    if row["Counts"] not in [170]:
+        row['analysis_actual'] = 0
+
     if row['analysis_actual'] == 0:
         results_push.append({'d0': None, 'V0': None, 'dy': None, 'Vy': None, 'du': None, 'Vp': None, 'failure_mode': None})
         results_mPhi.append({'phi0': None, 'M0': None, 'phi_y': None, 'M_y': None, 'phi_u': None, 'M_u': None, 'failure_mode': None})
@@ -31,8 +34,8 @@ for i, row in columns_df.iterrows():
         print("⚠️ Skipping analysis as 'analysis_actual' is 0.")
         continue
     # Create model object
-    col_props = col_props = {'fc':row['fc'], 'B':row['B'], 'H':row['H'], 'L':row['L'], 'cover':row['cover'], 'nBarsTop': int(row['nBarsTop']), 'dbTop': row['dbTop'], 'nBarsBot': int(row['nBarsBot']), 'dbBot': row['dbBot'], 'nBarsInt': int(row['nBarsInt']), 'dbInt': row['dbInt'], 'fy': row['fy'], 'fu': row['fu'], 'e_sh': 0.005, 'e_ult': row['e_ult'], 'dh':row['dh'], 'sh':row['sh'], 'fyh':row['fyh'],'fuh':row['fuh'], 'esm':row['esm'], 'nx': row['nx'], 'ny': row['ny'], 'P_axial': row['P_axial'], 'divB': int(row['divB']), 'divD': int(row['divD']), 'divCover': int(row['divCover'])}
-    
+    col_props = {'fc':row['fc'], 'D':row['D'], 'L':row['L'],
+                 'cover':row['cover'], 'nBars': int(row['nBars']), 'db': row['db'], 'fy': row['fy'], 'fu': row['fu'], 'e_sh': 0.005, 'e_ult': row['eps_ult'], 'dh':row['dh'], 'sh':row['sh'], 'fyh':row['fyh'], 'esm':row['esm'], 'P_axial': row['P_axial'], 'nAng': 30, 'nRad':20, 'nRad_cover': 8}
     col = Model(col_props)
     # Run analyses
     results_mPhi_df, bilinear_mPhi_df, yield_step_mPhi = col.run_M_phi_analysis()
@@ -48,7 +51,7 @@ for i, row in columns_df.iterrows():
         'du_': disp_u/row['L']*100, 'Vp_': bilinear_mPhi_df['moments'][3]/col.L,
         'failure_mode': mode_mPhi if mode_mPhi is not None else 'None'
     })
-    results_push_df, bilinear_push_df, yield_step_push = col.run_pushover_analysis(dU=0.01)
+    results_push_df, bilinear_push_df, yield_step_push = col.run_pushover_analysis(dU=0.1)
     # Store results in summary table
     mode = getattr(col, 'failure_mode_pushover', None)
     results_push.append({

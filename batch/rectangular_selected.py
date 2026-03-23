@@ -24,6 +24,9 @@ for i, row in columns_df.iterrows():
     safe_column_name = re.sub(r'[/():<>"|?*\\]', '_', row['Column'])
     print(f"\n=== Running pushover for column {i+1}/{len(columns_df)} ({safe_column_name})===")
 
+    if row["Counts"] not in [26]:
+        row['analysis_actual'] = 0
+
     if row['analysis_actual'] == 0:
         results_push.append({'d0': None, 'V0': None, 'dy': None, 'Vy': None, 'du': None, 'Vp': None, 'failure_mode': None})
         results_mPhi.append({'phi0': None, 'M0': None, 'phi_y': None, 'M_y': None, 'phi_u': None, 'M_u': None, 'failure_mode': None})
@@ -35,7 +38,7 @@ for i, row in columns_df.iterrows():
     
     col = Model(col_props)
     # Run analyses
-    results_mPhi_df, bilinear_mPhi_df, yield_step_mPhi = col.run_M_phi_analysis()
+    results_mPhi_df, bilinear_mPhi_df, yield_step_mPhi = col.run_M_phi_analysis(dK = 0.0001)
     mode_mPhi = getattr(col, 'failure_mode_mPhi', None)
     results_mPhi.append({
         'phi0': 0, 'M0': 0,
@@ -48,7 +51,7 @@ for i, row in columns_df.iterrows():
         'du_': disp_u/row['L']*100, 'Vp_': bilinear_mPhi_df['moments'][3]/col.L,
         'failure_mode': mode_mPhi if mode_mPhi is not None else 'None'
     })
-    results_push_df, bilinear_push_df, yield_step_push = col.run_pushover_analysis(dU=0.01)
+    results_push_df, bilinear_push_df, yield_step_push = col.run_pushover_analysis(dU=0.25)
     # Store results in summary table
     mode = getattr(col, 'failure_mode_pushover', None)
     results_push.append({
