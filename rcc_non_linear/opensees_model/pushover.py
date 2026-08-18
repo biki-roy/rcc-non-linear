@@ -1,4 +1,3 @@
-from xml.etree.ElementPath import ops
 from rcc_non_linear.opensees_model import model
 from rcc_non_linear.opensees_model.gravity import run_gravity_analysis
 from rcc_non_linear.opensees_model.circ_section import circular_column_bar_fibers, circular_column_core_fibers
@@ -15,11 +14,18 @@ def pushover_analysis(model, maxU, dU, self_wt):
 
     ops.section('Elastic', model.elastic_sec_tag, model.Ec, model.Ag, model.Iz*model.k_eff)
 
-    ops.geomTransf('PDelta', 1)
+    geom_transf_type = getattr(model, "geom_transf", "PDelta")
+    ops.geomTransf(geom_transf_type, 1)
 
-    ops.beamIntegration('HingeRadau', 1, model.fib_sec_tag, model.lp, model.fib_sec_tag, 0, model.elastic_sec_tag)
+    # Modular Beam Integration setup
+    integration_rule = getattr(model, "integration", None)
+    if integration_rule is not None:
+        integration_rule.build(1, model)
+    else:
+        ops.beamIntegration('HingeRadau', 1, model.fib_sec_tag, model.lp, model.fib_sec_tag, 0, model.elastic_sec_tag)
 
-    ops.element('forceBeamColumn', 1, *[1, 2], 1, 1)
+    element_type = getattr(model, "element_type", "forceBeamColumn")
+    ops.element(element_type, 1, *[1, 2], 1, 1)
     
     col_wt = (0.15 / 12**3) * model.Ag * model.L if self_wt else 0.0
     total_wt = model.P_axial + col_wt/2
@@ -128,7 +134,7 @@ def pushover_analysis(model, maxU, dU, self_wt):
         results['drift %'].append(curr_disp*100/model.L)
 
         # Termination Checks
-        if  "strength" in model.failure_criteria and curr_force < 0.85 * peak_force:
+        if "strength" in model.failure_criteria and curr_force < 0.85 * peak_force:
             print(f"⚠️ Strength drop at displacement = {curr_disp:.6f}")
             model.failure_mode_pushover = "strength"
             break
@@ -136,7 +142,7 @@ def pushover_analysis(model, maxU, dU, self_wt):
             print(f"⚠️ Concrete crushed at displacement = {curr_disp:.6f}")
             model.failure_mode_pushover = "core"
             break
-        if model.core_crush_limit and "core" in model.failure_criteria and cum_crushed_cores_area >= model.core_crush_limit:
+        if model.core_crush_limit is not None and "core" in model.failure_criteria and cum_crushed_cores_area >= model.core_crush_limit:
             print(f"⚠️ Concrete crushed at displacement = {curr_disp:.6f}")
             model.failure_mode_pushover = "core"
             print("cumulative crushed core area ratio:", cum_crushed_cores_area)
@@ -149,7 +155,7 @@ def pushover_analysis(model, maxU, dU, self_wt):
             print(f"⚠️ Steel ruptured at displacement = {curr_disp:.6f}")
             model.failure_mode_pushover = "rebar"
             break
-        if "rebar" in model.failure_criteria and model.section_type == "circular" and model.rupture_limit is not None and len(ruptured_bars) >= model.rupture_limit:
+        if "rebar" in model.failure_criteria and model.section_type == "circular" and model.rupture_limit is not None and len(ruptured_bars) >= rupture_limit:
             print(f"⚠️  {len(ruptured_bars)} / {model.nBars} bars having IDs {ruptured_bars} ruptured at displacement = {curr_disp:.6f}")
             model.failure_mode_pushover = "rebar"
             model.ruptured_bars = ruptured_bars

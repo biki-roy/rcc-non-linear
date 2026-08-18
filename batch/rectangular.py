@@ -8,12 +8,12 @@ import re
 workbook_name="rectangular_column.xlsx"
 file_path = Path(get_excel_file_path(workbook_name=workbook_name))
 
-output_dir = file_path.parent / "results_actual"
+output_dir = file_path.parent / "results_aashto"
 # Create folder if it does not exist
 output_dir.mkdir(exist_ok=True)
 # print(output_dir)
 
-columns_df = pd.read_excel(file_path, sheet_name="data")
+columns_df = pd.read_excel(file_path, sheet_name="data_aashto")
 
 # Initialize list to collect results
 results_push = []
@@ -24,11 +24,11 @@ for i, row in columns_df.iterrows():
     safe_column_name = re.sub(r'[/():<>"|?*\\]', '_', row['Column'])
     print(f"\n=== Running pushover for column {i+1}/{len(columns_df)} ({safe_column_name})===")
 
-    if row['analysis_actual'] == 0:
+    if row['analysis'] == 0:
         results_push.append({'d0': None, 'V0': None, 'dy': None, 'Vy': None, 'du': None, 'Vp': None, 'failure_mode': None})
         results_mPhi.append({'phi0': None, 'M0': None, 'phi_y': None, 'M_y': None, 'phi_u': None, 'M_u': None, 'failure_mode': None})
         results_push_mPhi.append({'d0_': None, 'V0_': None, 'dy_': None, 'Vy_': None, 'du_': None, 'Vp_': None, 'failure_mode': None})
-        print("⚠️ Skipping analysis as 'analysis_actual' is 0.")
+        print("⚠️ Skipping analysis as 'analysis' is 0.")
         continue
     # Create model object
     col_props = col_props = {'fc':row['fc'], 'B':row['B'], 'H':row['H'], 'L':row['L'], 'cover':row['cover'], 'nBarsTop': int(row['nBarsTop']), 'dbTop': row['dbTop'], 'nBarsBot': int(row['nBarsBot']), 'dbBot': row['dbBot'], 'nBarsInt': int(row['nBarsInt']), 'dbInt': row['dbInt'], 'fy': row['fy'], 'fu': row['fu'], 'e_sh': 0.005, 'e_ult': row['e_ult'], 'dh':row['dh'], 'sh':row['sh'], 'fyh':row['fyh'],'fuh':row['fuh'], 'esm':row['esm'], 'nx': row['nx'], 'ny': row['ny'], 'P_axial': row['P_axial'], 'divB': int(row['divB']), 'divD': int(row['divD']), 'divCover': int(row['divCover'])}

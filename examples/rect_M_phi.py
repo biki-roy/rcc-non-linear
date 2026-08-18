@@ -10,17 +10,17 @@ col_props = {
     'fy': 69.618, 'fu': 101.412, 'Es': 29000, 'e_ult': 0.106,
     'dh':0.5118, 'sh':3.937, 'fyh':44.13, 'esm':0.0962,
     'nx': 5, 'ny':5,
-    'P_axial': 197.62
+    'P_axial': 197.62, 'divB': 30, 'divD': 30, 'divCover': 8
 }
 
 model = Model(col_props)
 
-print(model.confined_props)
-print(model.unconfined_props)
-print(model.ke)
+# print(model.confined_props)
+# print(model.unconfined_props)
+# print(model.ke)
 
 #To plot the fiber section, use any of the following methods:
-# model.plot_fib_section()
+model.plot_fib_section()
 # model.fib_section.plot()
 #To run moment-curvature analysis:
 # results_df, bilinear_df, yield_step = model.run_M_phi_analysis()

@@ -3,6 +3,7 @@ import os
 from rcc_non_linear.concrete_models.mander_model import RectConcreteMander, CircConcreteMander, SteelMander, rect_ke
 from rcc_non_linear.opensees_model.rect_section import RectSection
 from rcc_non_linear.opensees_model.circ_section import CircSection
+from rcc_non_linear.opensees_model.beam_integration import BeamIntegration, HingeRadau
 from rcc_non_linear.utils.helper import caltrans_bilinear 
 from rcc_non_linear.utils.report import create_markdown_report, md_to_pdf_reportlab
 from rcc_non_linear.utils.plot_section import plot_fiber_section_damage
@@ -129,6 +130,20 @@ class Model:
 
         db = self.db if self.section_type == "circular" else max(self.dbTop, self.dbBot)
         self.lp = max(0.08 * self.L + 0.15 * self.fy * db, 0.3*db*self.fy)
+        
+        # Beam integration, element formulation, and geometric transformation
+        integration_prop = props.get("integration", None)
+        if integration_prop is None:
+            self.integration = HingeRadau()
+        elif isinstance(integration_prop, BeamIntegration):
+            self.integration = integration_prop
+        else:
+            raise TypeError(
+                f"Expected 'integration' to be an instance of BeamIntegration, got {type(integration_prop).__name__}"
+            )
+        self.element_type = props.get("element_type", "forceBeamColumn")
+        self.geom_transf = props.get("geom_transf", "PDelta")
+
         self.m_phi_done = False
         self.create_model()        
 
@@ -223,6 +238,74 @@ class Model:
         bilinear_df["drift %"] = bilinear_df["displacements"] *100 / self.L 
         self.df_pushover, self.df_pushover_idealized = results_df, bilinear_df
         return results_df, bilinear_df, yield_step
+
+
+    def run_cyclic_analysis(
+        self,
+        drift_peaks=None,
+        disp_peaks=None,
+        num_cycles_per_peak=1,
+        dU=0.05,
+        self_wt=True,
+        verbose=True,
+    ):
+        """
+        Runs quasi-static reversed cyclic pushover analysis on the RC column model.
+
+        Parameters
+        ----------
+        drift_peaks : list of float, optional
+            List of drift peaks (as fractions e.g. [0.005, -0.005, 0.01, -0.01] or percentages e.g. [0.5, -0.5]).
+        disp_peaks : list of float, optional
+            Direct displacement peaks in inches (e.g. [1.5, -1.5, 3.0, -3.0]).
+        num_cycles_per_peak : int, default=1
+            Number of repetitions per peak level.
+        dU : float, default=0.05
+            Target displacement increment per sub-step (in).
+        self_wt : bool, default=True
+            Whether to include column self-weight in gravity loads.
+        verbose : bool, default=True
+            Whether to print cycle progress.
+
+        Returns
+        -------
+        results_df : pandas.DataFrame
+            DataFrame containing 'displacements', 'forces', 'drift_ratios', 'core_strains', 'steel_strains'.
+        """
+        from rcc_non_linear.opensees_model.cyclic import run_cyclic_analysis
+        if not self.m_phi_done:
+            self.run_M_phi_analysis()
+        self.create_model()
+        results_df = run_cyclic_analysis(
+            self,
+            drift_peaks=drift_peaks,
+            disp_peaks=disp_peaks,
+            num_cycles_per_peak=num_cycles_per_peak,
+            dU=dU,
+            self_wt=self_wt,
+            verbose=verbose,
+        )
+        self.df_cyclic = results_df
+        return results_df
+
+    
+    def get_cyclic_backbone(self, envelope="both"):
+        """
+        Extracts the backbone (envelope) curve from the most recent cyclic analysis results.
+
+        Parameters
+        ----------
+        envelope : {'both', 'positive', 'negative', 'average'}, default='both'
+
+        Returns
+        -------
+        backbone_df : pandas.DataFrame
+        """
+        if not hasattr(self, 'df_cyclic') or self.df_cyclic is None:
+            raise ValueError("No cyclic analysis data found. Run 'run_cyclic_analysis()' first.")
+        from rcc_non_linear.utils.helper import extract_backbone_curve
+        return extract_backbone_curve(self.df_cyclic, envelope=envelope)
+
 
     def create_report(self, filename="RC_Column_Report", out_dir=None, generate_pdf=True):
         """

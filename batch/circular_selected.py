@@ -13,7 +13,7 @@ output_dir = file_path.parent / "results_actual"
 output_dir.mkdir(exist_ok=True)
 # print(output_dir)
 
-columns_df = pd.read_excel(file_path, sheet_name="data")
+columns_df = pd.read_excel(file_path, sheet_name="data_actual")
 
 # Initialize list to collect results
 results_push = []
@@ -24,14 +24,14 @@ for i, row in columns_df.iterrows():
     safe_column_name = re.sub(r'[/():<>"|?*\\]', '_', row['Column'])
     print(f"\n=== Running pushover for column {i+1}/{len(columns_df)} ({safe_column_name})===")
 
-    if row["Counts"] not in [170]:
-        row['analysis_actual'] = 0
+    if row["Counts"] not in [74]:
+        row['analysis'] = 0
 
-    if row['analysis_actual'] == 0:
+    if row['analysis'] == 0:
         results_push.append({'d0': None, 'V0': None, 'dy': None, 'Vy': None, 'du': None, 'Vp': None, 'failure_mode': None})
         results_mPhi.append({'phi0': None, 'M0': None, 'phi_y': None, 'M_y': None, 'phi_u': None, 'M_u': None, 'failure_mode': None})
         results_push_mPhi.append({'d0_': None, 'V0_': None, 'dy_': None, 'Vy_': None, 'du_': None, 'Vp_': None, 'failure_mode': None})
-        print("⚠️ Skipping analysis as 'analysis_actual' is 0.")
+        print("⚠️ Skipping analysis as 'analysis' is 0.")
         continue
     # Create model object
     col_props = {'fc':row['fc'], 'D':row['D'], 'L':row['L'],
@@ -51,7 +51,7 @@ for i, row in columns_df.iterrows():
         'du_': disp_u/row['L']*100, 'Vp_': bilinear_mPhi_df['moments'][3]/col.L,
         'failure_mode': mode_mPhi if mode_mPhi is not None else 'None'
     })
-    results_push_df, bilinear_push_df, yield_step_push = col.run_pushover_analysis(dU=0.1)
+    results_push_df, bilinear_push_df, yield_step_push = col.run_pushover_analysis(dU=0.001)
     # Store results in summary table
     mode = getattr(col, 'failure_mode_pushover', None)
     results_push.append({

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rcc-non-linear"
-version = "0.1.0"
+version = "0.2.0"
 description = "Nonlinear analysis tools for RCC structures"
 authors = [{ name = "Abinash Mandal" }]
 readme = "README.md"

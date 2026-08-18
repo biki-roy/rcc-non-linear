@@ -155,3 +155,119 @@ def plot_response_multi(
 
     fig.show()
 
+
+def extract_backbone_curve(df, disp_col=None, force_col=None, envelope="both"):
+    """
+    Extracts the cyclic backbone (envelope) curve from hysteretic force-displacement data.
+    Finds peak response points for each cycle excursion and forms a monotonic backbone curve.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        DataFrame containing displacement and force columns.
+    disp_col : str, optional
+        Name of the displacement column. Defaults to 'displacements' or column 0.
+    force_col : str, optional
+        Name of the force column. Defaults to 'forces' or column 1.
+    envelope : {'both', 'positive', 'negative', 'average'}, default='both'
+        - 'both': returns combined positive and negative backbone [ -u_max ... 0 ... +u_max ]
+        - 'positive': returns only positive displacement backbone [0 ... +u_max]
+        - 'negative': returns only negative displacement backbone [0 ... -u_max]
+        - 'average': returns average of positive and mirrored negative backbones
+
+    Returns
+    -------
+    backbone_df : pandas.DataFrame
+        DataFrame with extracted backbone curve points.
+    """
+    if disp_col is None:
+        disp_col = 'displacements' if 'displacements' in df.columns else df.columns[0]
+    if force_col is None:
+        force_col = 'forces' if 'forces' in df.columns else df.columns[1]
+
+    d = df[disp_col].to_numpy()
+    f = df[force_col].to_numpy()
+
+    # 1. Identify local extrema (peaks and valleys) in displacement
+    diffs = np.diff(d)
+    direction = np.sign(diffs)
+    # Filter out zero increments
+    non_zero_idx = np.where(direction != 0)[0]
+    if len(non_zero_idx) < 2:
+        return pd.DataFrame({disp_col: [0.0], force_col: [0.0]})
+
+    filtered_dir = direction[non_zero_idx]
+    dir_changes = np.where(filtered_dir[:-1] != filtered_dir[1:])[0]
+    extrema_idx = non_zero_idx[dir_changes + 1]
+
+    # Include first and last points if relevant
+    candidate_indices = np.unique(np.concatenate(([0], extrema_idx, [len(d) - 1])))
+
+    # Separate into positive and negative peaks
+    pos_points = [(0.0, 0.0)]
+    neg_points = [(0.0, 0.0)]
+
+    for idx in candidate_indices:
+        disp_val = d[idx]
+        force_val = f[idx]
+
+        if disp_val > 1e-5:
+            # Positive excursion peak
+            pos_points.append((disp_val, force_val))
+        elif disp_val < -1e-5:
+            # Negative excursion valley
+            neg_points.append((disp_val, force_val))
+
+    # Sort and filter for sequential upper envelope (monotonic displacement increase)
+    pos_points = sorted(pos_points, key=lambda p: p[0])
+    filtered_pos = [(0.0, 0.0)]
+    max_disp_so_far = 0.0
+    for p_d, p_f in pos_points:
+        if p_d > max_disp_so_far + 1e-4:
+            filtered_pos.append((p_d, p_f))
+            max_disp_so_far = p_d
+
+    # Negative points (sorted from most negative to 0)
+    neg_points = sorted(neg_points, key=lambda p: p[0])
+    filtered_neg = []
+    min_disp_so_far = 0.0
+    # Process from 0 downwards
+    for p_d, p_f in reversed(neg_points):
+        if p_d < min_disp_so_far - 1e-4:
+            filtered_neg.insert(0, (p_d, p_f))
+            min_disp_so_far = p_d
+    filtered_neg.append((0.0, 0.0))
+
+    if envelope == 'positive':
+        res_d, res_f = zip(*filtered_pos)
+    elif envelope == 'negative':
+        res_d, res_f = zip(*filtered_neg)
+    elif envelope == 'average':
+        # Interpolate positive and absolute negative to average curve
+        pos_arr = np.array(filtered_pos)
+        neg_arr = np.array([(abs(x), abs(y)) for x, y in filtered_neg])
+        neg_arr = neg_arr[np.argsort(neg_arr[:, 0])]
+        
+        max_d = min(pos_arr[-1, 0], neg_arr[-1, 0]) if (len(pos_arr) > 1 and len(neg_arr) > 1) else pos_arr[-1, 0]
+        eval_d = np.linspace(0, max_d, max(len(filtered_pos), len(filtered_neg)))
+        f_pos_interp = np.interp(eval_d, pos_arr[:, 0], pos_arr[:, 1])
+        f_neg_interp = np.interp(eval_d, neg_arr[:, 0], neg_arr[:, 1])
+        avg_f = 0.5 * (f_pos_interp + f_neg_interp)
+        res_d, res_f = eval_d, avg_f
+    else:  # 'both'
+        # Combine negative (ascending) and positive (ascending)
+        combined = filtered_neg[:-1] + filtered_pos
+        res_d, res_f = zip(*combined)
+
+    backbone_df = pd.DataFrame({
+        disp_col: list(res_d),
+        force_col: list(res_f)
+    })
+    if 'drift %' in df.columns or ('displacements' in df.columns and hasattr(df, 'L')):
+        if 'drift %' in df.columns:
+            # maintain drift %
+            backbone_df['drift %'] = backbone_df[disp_col] * (df['drift %'].iloc[-1] / df[disp_col].iloc[-1]) if df[disp_col].iloc[-1] != 0 else 0.0
+
+    return backbone_df
+
+
