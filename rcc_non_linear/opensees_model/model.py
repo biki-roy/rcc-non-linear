@@ -172,7 +172,7 @@ class Model:
                 nx=self.nx, ny=self.ny, ke=self.ke
             )
             self.k_confinement = material.k
-        self.confined_props = material.confined_props()
+        self.confined_props = material.unconfined_props()
         self.unconfined_props = material.unconfined_props()
         ops.uniaxialMaterial('Concrete01', self.core_tag, *self.confined_props)
         ops.uniaxialMaterial('Concrete01', self.cover_tag, *self.unconfined_props)
