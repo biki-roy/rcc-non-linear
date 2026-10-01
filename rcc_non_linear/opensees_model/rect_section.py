@@ -23,7 +23,7 @@ class RectSection:
         self.dbBot = dbBot
         self.dbInt = dbInt
         self.sec_tag = sec_tag
-        self.core_tag = core_material
+        self.core_tag = cover_material
         self.cover_tag = cover_material
         self.bar_tag = bar_material
         self.divB, self.divD, self.divCover = divB, divD, divCover
